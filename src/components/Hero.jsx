@@ -1,5 +1,6 @@
 import React from 'react'
 import { styles } from '../styles';
+import { CarCanvas } from './canvas';
 
 const Hero = () => {
   return (
@@ -9,10 +10,9 @@ const Hero = () => {
           <div className='w-5 h-5 rounded-full bg-[#915EFF]' />
           <div className='w-1 sm:h-80 h-40 violet-gradient' />
         </div>
-
         <div>
-          <h1 className={`${styles.heroHeadText} text-black`}>
-            Hi, I'm <span className='text-[#03316c]'>Jacky</span>
+          <h1 className={`${styles.heroHeadText} text-white`}>
+            Hi, I'm <span className='text-[#915EFF]'>Jacky</span>
           </h1>
           <p className={`${styles.heroSubText} mt-2 text-black-100`}>
             Insert Dev Description Here. <br className='sm:hidden block' />
@@ -20,6 +20,8 @@ const Hero = () => {
           </p>
         </div>
       </div>
+      <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+      <CarCanvas />
     </section>
   )
 }

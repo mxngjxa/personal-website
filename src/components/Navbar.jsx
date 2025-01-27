@@ -18,7 +18,7 @@ const Navbar = () => {
           window.scrollTo(0, 0);
         }}>
           <img src={logo} alt='logo' className='w-9 h-9 object-contain' />
-          <p className='text-black text-[18px] font-bold cursor-pointer'>
+          <p className='text-white text-[18px] font-bold cursor-pointer'>
             Jacky&nbsp;
             <span className='sm:inline hidden'>
               | Senior BSc Data Science
@@ -45,7 +45,7 @@ const Navbar = () => {
                     active === link.title 
                     ? 'text-white' 
                     : "text-secondary"
-                  } font-poppins font-medium text-[16px] cursor-pointer`} 
+                  } font-medium text-[16px] cursor-pointer`} 
                   onClick={() => {
                     setToggle(!toggle);
                     setActive(link.title);
