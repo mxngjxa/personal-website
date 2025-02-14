@@ -20,7 +20,9 @@ const Hero = () => {
           </p>
         </div>
       </div>
+
       <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+      
       <CarCanvas />
     </section>
   )
