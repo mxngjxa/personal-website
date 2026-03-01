@@ -1,24 +1,18 @@
-FROM node:22.2.0-slim as BUILD_STAGE
+FROM oven/bun:1 AS BUILD_STAGE
 
 WORKDIR /app
 
-# Install pnpm
-RUN npm install -g pnpm@8
+COPY package.json bun.lockb ./
 
-COPY package.json pnpm-lock.yaml ./
-
-RUN pnpm install --frozen-lockfile
+RUN bun install --frozen-lockfile
 
 COPY . .
 
-RUN pnpm build
+RUN bun run build
 
-FROM node:alpine
+FROM oven/bun:1-slim
 
 WORKDIR /app
-
-# Install pnpm in production stage
-RUN npm install -g pnpm@8
 
 COPY --from=BUILD_STAGE /app/package.json ./package.json
 COPY --from=BUILD_STAGE /app/node_modules ./node_modules
@@ -27,4 +21,4 @@ COPY --from=BUILD_STAGE /app/public ./public
 
 EXPOSE 3000
 
-CMD ["pnpm", "start"]
+CMD ["bun", "run", "start"]

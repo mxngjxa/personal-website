@@ -10,15 +10,15 @@ This is a **Minimalist CV/Resume web application** built with Next.js 14, React,
 
 ### Development
 ```bash
-pnpm dev          # Start development server on http://localhost:3000
-pnpm build        # Create production build
-pnpm start        # Start production server
-pnpm lint         # Run Biome linting checks
-pnpm lint:fix     # Run Biome linting with auto-fix
-pnpm format       # Check code formatting with Biome
-pnpm format:fix   # Format code with Biome
-pnpm check        # Run both linting and formatting checks
-pnpm check:fix    # Run both linting and formatting with auto-fix
+bun dev           # Start development server on http://localhost:3000
+bun run build     # Create production build
+bun run start     # Start production server
+bun run lint      # Run Biome linting checks
+bun run lint:fix  # Run Biome linting with auto-fix
+bun run format    # Check code formatting with Biome
+bun run format:fix # Format code with Biome
+bun run check     # Run both linting and formatting checks
+bun run check:fix # Run both linting and formatting with auto-fix
 ```
 
 ### Docker Deployment
@@ -28,7 +28,7 @@ docker compose up -d     # Run the container
 docker compose down      # Stop the container
 ```
 
-**Note**: The project uses **Biome.js** for linting and formatting instead of ESLint and Prettier. Always run `pnpm check:fix` before committing to ensure code quality.
+**Note**: The project uses **Biome.js** for linting and formatting instead of ESLint and Prettier. Always run `bun run check:fix` before committing to ensure code quality.
 
 ## Architecture
 
