@@ -113,7 +113,7 @@ export function reactToString(content: React.ReactNode): string {
     return content.map(reactToString).join("");
   }
   if (typeof content === "object" && content && "props" in content) {
-    const { children } = content.props;
+    const { children } = content.props as { children?: React.ReactNode };
     if (children) return reactToString(children);
   }
   return "";
