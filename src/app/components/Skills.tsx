@@ -1,5 +1,5 @@
 import React from "react";
-import { Badge } from "@/components/ui/badge";
+import { ShieldBadge } from "@/components/ui/shield-badge";
 import { Section } from "@/components/ui/section";
 import { cn } from "@/lib/utils";
 
@@ -21,9 +21,7 @@ function SkillsList({ skills, className }: SkillsListProps) {
     >
       {skills.map((skill) => (
         <li key={skill}>
-          <Badge className="print:text-[10px]" aria-label={`Skill: ${skill}`}>
-            {skill}
-          </Badge>
+          <ShieldBadge label={skill} />
         </li>
       ))}
     </ul>

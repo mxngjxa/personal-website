@@ -1,5 +1,5 @@
 import React from "react";
-import { Badge } from "@/components/ui/badge";
+import { ShieldBadge } from "@/components/ui/shield-badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Section } from "@/components/ui/section";
 import type { RESUME_DATA } from "@/data/resume-data";
@@ -30,12 +30,7 @@ function BadgeList({
     >
       {badges.map((badge) => (
         <li key={badge}>
-          <Badge
-            variant="secondary"
-            className="align-middle text-xs print:px-1 print:py-0.5 print:text-[8px] print:leading-tight"
-          >
-            {badge}
-          </Badge>
+          <ShieldBadge label={badge} />
         </li>
       ))}
     </ul>
