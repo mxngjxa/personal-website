@@ -1,236 +1,153 @@
 import type { ResumeData } from "@/lib/types";
 
 export const RESUME_DATA: ResumeData = {
-  name: "Bartosz Jarocki",
-  initials: "BJ",
-  location: "Wrocław, Poland, CET",
-  locationLink: "https://www.google.com/maps/place/Wrocław",
-  about: "Full Stack Engineer dedicated to building high-quality products.",
+  name: 'Mingjia "Jacky" Guan',
+  initials: "MG",
+  location: "New York Metropolitan Area",
+  locationLink: "https://www.google.com/maps/place/New+York+Metropolitan+Area",
+  about:
+    "Trilingual ML/AI Engineer specializing in NLP, model evaluation, and production-grade classification systems.",
   summary: (
     <>
-      Full Stack Engineer specializing in high-performance React applications,
-      scalable Node.js services, and real-time collaboration systems.
-      Experienced in technical architecture design and remote team leadership.
+      Experienced Trilingual ML/AI Engineer with expertise in NLP, model
+      evaluation, and advanced classification systems, delivering reliable,
+      production-grade models. Currently architecting multi-agent,
+      cross-department solutions at micro1 while pursuing MS in Quantum
+      Computing, combining cutting-edge research with scalable enterprise
+      deployment across international markets.
     </>
   ),
-  avatarUrl: "https://avatars.githubusercontent.com/u/1017620?v=4",
-  personalWebsiteUrl: "https://jarocki.me",
+  avatarUrl: "https://avatars.githubusercontent.com/mxngjxa?v=4",
+  personalWebsiteUrl: "https://github.com/mxngjxa",
   contact: {
-    email: "bartosz.jarocki@hey.com",
-    tel: "+48530213401",
+    email: "mingjiaguan@icloud.com",
+    tel: "+18453212480",
     social: [
       {
         name: "GitHub",
-        url: "https://github.com/BartoszJarocki",
+        url: "https://github.com/mxngjxa",
         icon: "github",
       },
       {
         name: "LinkedIn",
-        url: "https://www.linkedin.com/in/bjarocki/",
+        url: "https://www.linkedin.com/in/mingjiaguan/",
         icon: "linkedin",
-      },
-      {
-        name: "X",
-        url: "https://x.com/BartoszJarocki",
-        icon: "x",
       },
     ],
   },
   education: [
     {
-      school: "Wrocław University of Technology",
-      degree: "Bachelor's Degree in Control systems engineering and Robotics",
-      start: "2007",
-      end: "2010",
+      school: "Fei Tian College - Northern Campus",
+      degree: "MS in Quantum Computing",
+      start: "2025",
+      end: "2027",
+    },
+    {
+      school: "Fei Tian College - Northern Campus",
+      degree: "BS in Data Science, magna cum laude | GPA: 3.80",
+      start: "2023",
+      end: "2025",
     },
   ],
   work: [
     {
-      company: "Motion",
-      link: "https://motionapp.com/",
-      badges: ["Remote", "AI", "React", "Next.js", "TypeScript", "AdonisJS"],
-      title: "Senior Software Engineer",
+      company: "micro1, Inc.",
+      link: "https://micro1.ai",
+      badges: ["AI Engineering", "RAG", "Multi-Agent", "LLM"],
+      title: "Member of Technical Staff, AI Engineering",
       start: "2025",
       end: null,
       description: (
         <>
-          Working on internal AI agents platform allowing marketing specialists
-          to create AI workflows.
+          Led R&D and cross-functional delivery of multi-tenant RAG chatbot
+          platform and multimodal ML systems, coordinating 4–5 QA teams
+          simultaneously while reporting directly to C-suite on product
+          strategy, technical roadmaps, and go-to-market execution.
         </>
       ),
     },
     {
-      company: "Film.io",
-      link: "https://film.io",
-      badges: ["Remote", "React", "Next.js", "TypeScript", "Node.js"],
-      title: "Software Architect",
+      company: "MG Solutions",
+      link: "",
+      badges: ["DevOps", "Docker", "Nginx", "Self-Hosted"],
+      title: "DevOps Engineer",
+      start: "2025",
+      end: null,
+      description: (
+        <>
+          Migrated SMB clients from vendor-locked platforms (GoDaddy, Microsoft
+          365) to self-hosted VPS infrastructure over 2–5 month engagements,
+          architecting Docker-based environments with Nginx reverse proxy,
+          Cloudflare DDoS protection, and Prometheus monitoring that eliminated
+          recurring SaaS costs while maintaining 99.5% uptime.
+        </>
+      ),
+    },
+    {
+      company: "Deledao Technologies Corp.",
+      link: "https://deledao.com",
+      badges: ["ML Engineering", "NLP", "TensorFlow", "Multilingual"],
+      title: "Member of Technical Staff, ML Engineering",
       start: "2024",
       end: "2025",
       description: (
         <>
-          Leading technical architecture of a blockchain-based film funding
-          platform.
-          <ul className="list-inside list-disc">
-            <li>
-              Architecting migration from CRA to Next.js for improved
-              performance, SEO, and DX
-            </li>
-            <li>
-              Established release process enabling faster deployments and
-              reliable rollbacks
-            </li>
-            <li>
-              Implementing system-wide monitoring and security improvements
-            </li>
-          </ul>
+          Spearheaded multilingual ML classification system and cross-department
+          automation R&D for content classification and student wellness
+          products, deploying multi-tiered models achieving 96%+ F1 score /
+          98%+ accuracy / sub-400ms latency for the Taiwanese market; built 10+
+          internal automations scaling infrastructure for 3× sales growth.
         </>
       ),
     },
     {
-      company: "Parabol",
-      link: "https://parabol.co",
-      badges: [
-        "Remote",
-        "React",
-        "TypeScript",
-        "Node.js",
-        "GraphQL",
-        "Tailwind CSS",
-      ],
-      title: "Senior Full Stack Developer",
-      start: "2021",
-      end: "2024",
+      company: "FTC-NC",
+      link: "https://ftc.edu",
+      badges: ["Teaching", "Linear Algebra", "Data Mining"],
+      title: "Adjunct Instructor / Teaching Assistant",
+      start: "2024",
+      end: "2025",
       description: (
         <>
-          Senior developer and squad leader for an enterprise agile meeting
-          platform.
-          <ul className="list-inside list-disc">
-            <li>
-              Built design system with Tailwind CSS, improving development speed
-              and time to market
-            </li>
-            <li>
-              Implemented engineering practices: PR automation, code review
-              guidelines, and workflows
-            </li>
-            <li>
-              Open source contributions to Relay DevTools and React i18n tooling
-            </li>
-          </ul>
+          Instructor for Linear Algebra. Collaborated with faculty to tutor Data
+          Mining and Data Structures & Algorithms students, deliver coursework
+          feedback and exam prep, and create QMD/LaTeX lecture materials.
         </>
       ),
-    },
-    {
-      company: "Clevertech",
-      link: "https://clevertech.biz",
-      badges: ["Remote", "React", "TypeScript", "Node.js", "Android", "Kotlin"],
-      title: "Lead Android Developer → Full Stack Developer",
-      start: "2015",
-      end: "2021",
-      description: (
-        <>
-          Successfully transitioned from mobile to full-stack development while
-          leading distributed teams.
-          <ul className="list-inside list-disc">
-            <li>
-              Led frontend team at Evercast, building real-time platform
-              supporting 30+ users per room with HD streaming and collaboration
-              tools
-            </li>
-            <li>
-              Developed offline-first Android app for DKMS, improving donor
-              registration process
-            </li>
-            <li>
-              Led development teams across multiple successful client projects
-            </li>
-          </ul>
-        </>
-      ),
-    },
-    {
-      company: "Jojo Mobile",
-      link: "https://bsgroup.eu/",
-      badges: ["On Site", "Android", "Java", "Kotlin"],
-      title: "Android Developer → Lead Android Developer",
-      start: "2012",
-      end: "2015",
-      description: (
-        <>
-          First Android developer, grew and led a team of 15+ engineers while
-          establishing engineering culture.
-          <ul className="list-inside list-disc">
-            <li>
-              Developed apps for major Polish companies including LOT, Polskie
-              Radio, and Agora
-            </li>
-            <li>Built and mentored high-performing mobile development team</li>
-          </ul>
-        </>
-      ),
-    },
-    {
-      company: "Nokia Siemens Networks",
-      link: "https://www.nokia.com",
-      badges: ["On Site", "C/C++", "LTE", "Agile"],
-      title: "C/C++ Developer",
-      start: "2010",
-      end: "2012",
-      description:
-        "Developed software for LTE base stations at enterprise scale, gaining strong fundamentals in software architecture, testing practices, and cross-team collaboration.",
     },
   ],
   skills: [
-    "React/Next.js/Remix",
-    "TypeScript",
-    "Tailwind CSS",
-    "Design Systems",
-    "WebRTC",
-    "WebSockets",
-    "Node.js",
-    "GraphQL",
-    "Relay",
-    "System Architecture",
-    "Remote Team Leadership",
+    "Python",
+    "TypeScript/JavaScript",
+    "SQL",
+    "R",
+    "TensorFlow",
+    "PyTorch",
+    "Scikit-Learn / CuML",
+    "Apache Spark / Kafka",
+    "LGBM / XGBoost",
+    "NLP / mmBERT",
+    "Docker",
+    "AWS / GCP / Azure",
+    "RAG / Multi-Agent Systems",
+    "Linux / Bash",
+    "PostgreSQL / MongoDB",
   ],
   projects: [
     {
-      title: "Monito",
-      techStack: ["TypeScript", "Next.js", "Browser Extension", "PostgreSQL"],
+      title: "Dual-Layer Bilingual (EN/ZH) Web-Filter",
+      techStack: ["Python", "TensorFlow", "CuML", "CuPy", "Jieba", "Docker"],
       description:
-        "Browser extension for debugging web applications. Includes taking screenshots, screen recording, E2E tests generation and generating bug reports",
-      link: {
-        label: "monito.dev",
-        href: "https://monito.dev/",
-      },
+        "Dual-layer Chinese-English web filter for 13 sensitive categories in international K–12 markets, using linear regression token-frequency screening followed by context-aware mmBERT with per-category sensitivity tuning. Achieved 30× speedup via RAPIDS/TensorFlow GPU acceleration.",
     },
     {
-      title: "Consultly",
-      techStack: [
-        "TypeScript",
-        "Next.js",
-        "Vite",
-        "GraphQL",
-        "WebRTC",
-        "Tailwind CSS",
-        "PostgreSQL",
-        "Redis",
-      ],
+      title: "LSH Recommendation System",
+      techStack: ["Python", "JAX", "Redis", "PostgreSQL"],
       description:
-        "Platform for online consultations with real-time video meetings and scheduling",
+        "Open-source Locality Sensitive Hashing library implementing hyperplane hashing with a modular pipeline for vectorization, signature generation, and JAX-parallelized similarity scoring. Achieves 15ms average query latency at 1M scale; pip-installable with CI/CD tooling (Ruff + UV).",
       link: {
-        label: "consultly.com",
-        href: "https://consultly.com/",
-      },
-    },
-    {
-      title: "Minimalist CV",
-      techStack: ["TypeScript", "Next.js", "Tailwind CSS"],
-      description:
-        "An open source minimalist, print friendly CV template with a focus on readability and clean design. >9k stars on GitHub",
-      link: {
-        label: "Minimalist CV",
-        href: "https://github.com/BartoszJarocki/cv",
+        label: "github.com/mxngjxa",
+        href: "https://github.com/mxngjxa",
       },
     },
   ],
