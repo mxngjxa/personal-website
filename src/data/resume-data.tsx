@@ -20,7 +20,7 @@ export const RESUME_DATA: ResumeData = {
   avatarUrl: "https://avatars.githubusercontent.com/mxngjxa?v=4",
   personalWebsiteUrl: "https://github.com/mxngjxa",
   contact: {
-    email: "mingjiaguan@icloud.com",
+    email: "mingjiaguan@outlook.com",
     tel: "+18453212480",
     social: [
       {
@@ -30,7 +30,7 @@ export const RESUME_DATA: ResumeData = {
       },
       {
         name: "LinkedIn",
-        url: "https://www.linkedin.com/in/mingjiaguan/",
+        url: "https://www.linkedin.com/in/mingjia-jacky-guan/",
         icon: "linkedin",
       },
     ],
@@ -68,7 +68,7 @@ export const RESUME_DATA: ResumeData = {
     },
     {
       company: "MG Solutions",
-      link: "",
+      link: "https://solutions.mguan.org",
       badges: ["DevOps", "Docker", "Nginx", "Self-Hosted"],
       title: "DevOps Engineer",
       start: "2025",
@@ -146,8 +146,8 @@ export const RESUME_DATA: ResumeData = {
       description:
         "Open-source Locality Sensitive Hashing library implementing hyperplane hashing with a modular pipeline for vectorization, signature generation, and JAX-parallelized similarity scoring. Achieves 15ms average query latency at 1M scale; pip-installable with CI/CD tooling (Ruff + UV).",
       link: {
-        label: "github.com/mxngjxa",
-        href: "https://github.com/mxngjxa",
+        label: "github.com/mxngjxa/lshrs",
+        href: "https://github.com/mxngjxa/lshrs",
       },
     },
   ],
