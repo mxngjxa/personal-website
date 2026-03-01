@@ -19,10 +19,11 @@ interface Props {
 
 export const CommandMenu = ({ links }: Props) => {
   const [open, setOpen] = React.useState(false);
-  const isMac: boolean =
-    typeof window !== "undefined"
-      ? window.navigator.userAgent.indexOf("Mac") > -1
-      : false;
+  const [isMac, setIsMac] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMac(window.navigator.userAgent.indexOf("Mac") > -1);
+  }, []);
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
