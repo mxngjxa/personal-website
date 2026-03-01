@@ -1,14 +1,14 @@
 import React from "react";
-import { ShieldBadge } from "../../components/ui/shield-badge";
+import { ShieldBadge } from "@/components/ui/shield-badge";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../../components/ui/card";
-import { Section } from "../../components/ui/section";
-import type { RESUME_DATA } from "../../data/resume-data";
+} from "@/components/ui/card";
+import { Section } from "@/components/ui/section";
+import type { RESUME_DATA } from "@/data/resume-data";
 
 type ProjectTags = readonly string[];
 
