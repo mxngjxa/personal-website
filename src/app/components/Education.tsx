@@ -79,7 +79,7 @@ export function Education({ education }: EducationListProps) {
         aria-labelledby="education-section"
       >
         {education.map((item) => (
-          <article key={item.school}>
+          <article key={`${item.school}-${item.start}`}>
             <EducationItem education={item} />
           </article>
         ))}
