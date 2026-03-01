@@ -20,7 +20,7 @@ export const RESUME_DATA: ResumeData = {
   avatarUrl: "https://avatars.githubusercontent.com/mxngjxa?v=4",
   personalWebsiteUrl: "https://github.com/mxngjxa",
   contact: {
-    email: "mingjiaguan@outlook.com",
+    email: "mingjia.guan@outlook.com",
     tel: "+18453212480",
     social: [
       {

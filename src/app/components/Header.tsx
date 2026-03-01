@@ -3,6 +3,7 @@ import Image, { type StaticImageData } from "next/image";
 import React from "react";
 import { Avatar } from "@/components/avatar";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { GitHubIcon, LinkedInIcon } from "@/components/icons";
 import { XIcon } from "@/components/icons/x-icon";
 import { RESUME_DATA } from "@/data/resume-data";
@@ -120,6 +121,9 @@ function ContactButtons({
           />
         </li>
       ))}
+      <li>
+        <ThemeToggle />
+      </li>
     </ul>
   );
 }
