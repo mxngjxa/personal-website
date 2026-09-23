@@ -90,6 +90,93 @@ export function mirror(bitmap: Bitmap): Bitmap {
 
 export const SKIER_CARVE_LEFT: Bitmap = mirror(SKIER_CARVE_RIGHT);
 
+/*
+ * HOCKEY STOP. Upper body keeps facing down the fall line (toward the viewer)
+ * while the legs twist the skis across the slope, tips to the viewer's left.
+ * The right-hand versions are these bitmaps mirrored.
+ */
+
+/** SKID: skis swinging across, ~30° off horizontal, dropping into a crouch. */
+export const SKIER_SKID_LEFT: Bitmap = [
+  "..........KKKK......",
+  ".........KWWWWK.....",
+  "........KWRRRRWK....",
+  "........KKKKKKKK....",
+  "........KIIWIIIK....",
+  "........KKIIIIKK....",
+  ".........KKFFKK.....",
+  ".......KKRRKKRRKK...",
+  "......KRRRRRRRRRRK..",
+  ".....KRDRRRRRRRRDRK.",
+  "...KKKDRRRRRRRRRDKKK",
+  "..KKK.KRRRRRRRRK.KKG",
+  ".G...KBBBBBBBBBBK.G.",
+  ".G..KBBNBBBBBBNBKG..",
+  "G..KBBBBBBBBBBBBK...",
+  "G..KBBBBKKKKKBBBBKKK",
+  "G...KBBBK..KWWWKKK..",
+  "....KBBBK.KKKKKK....",
+  ".....KWWWKKKK.......",
+  "..RR.KKKKKK.........",
+  "....KKKK............",
+  "RRKK................",
+];
+
+/** STOP: skis fully sideways, deep crouch, downhill pole planted. */
+export const SKIER_STOP_LEFT: Bitmap = [
+  "............KKKK......",
+  "...........KWWWWK.....",
+  "..........KWRRRRWK....",
+  "..........KKKKKKKK....",
+  "..........KIIWIIIK....",
+  "..........KKIIIIKK....",
+  "...........KKFFKK.....",
+  ".........KKRRKKRRKK...",
+  "........KRRRRRRRRRRK..",
+  ".......KRDRRRRRRRRDRK.",
+  ".....KKKDRRRRRRRRRDKKK",
+  "...KKK.KRRRRRRRRRK.KKK",
+  "..GK...KBBBBBBBBBBK.G.",
+  "..G...KBBNBBBBBBNBBKG.",
+  ".G...KBBBBBBBBBBBBBG..",
+  ".G..KBBBBBKKKKKBBBBK..",
+  "G...KBBBBK....KBBBBK..",
+  "G....KBBBK....KBBBK...",
+  "G....KWWWK....KWWWK...",
+  "..RRKKKKKKKKKKKKKKKKKK",
+  "RRKKKKKKKKKKKKKKKKKKK.",
+];
+
+/** PARKED: stopped, standing tall, skis across the hill, poles planted. */
+export const SKIER_PARK_LEFT: Bitmap = [
+  "..........KKKK........",
+  ".........KWWWWK.......",
+  "........KWRRRRWK......",
+  "........KKKKKKKK......",
+  "........KIIWIIIK......",
+  "........KKIIIIKK......",
+  ".........KKFFKK.......",
+  ".......KKRRKKRRKK.....",
+  "......KRRRRRRRRRRK....",
+  ".....KRDRRRRRRRRDRK...",
+  "....KRDRRRRRRRRRRDRK..",
+  "....KRKDRRRRRRRRDKRK..",
+  "...KKKKKDRRRRRRDKKKKK.",
+  "...KKKKKBBBBBBBBKKKKK.",
+  "...G...KBBNBBNBBK...G.",
+  "...G...KBBBKKBBBK...G.",
+  "..G....KBBBKKBBBK....G",
+  "..G....KBBBKKBBBK....G",
+  "..G....KWWWKKWWWK....G",
+  ".G.....KKKKKKKKKK....G",
+  "..RRKKKKKKKKKKKKKKKKKK",
+  "RRKKKKKKKKKKKKKKKKKKK.",
+];
+
+export const SKIER_SKID_RIGHT: Bitmap = mirror(SKIER_SKID_LEFT);
+export const SKIER_STOP_RIGHT: Bitmap = mirror(SKIER_STOP_LEFT);
+export const SKIER_PARK_RIGHT: Bitmap = mirror(SKIER_PARK_LEFT);
+
 /** Pixel pines, snow on the branch tips. Three sizes for depth. */
 export const PINE_LARGE: Bitmap = [
   "......W......",

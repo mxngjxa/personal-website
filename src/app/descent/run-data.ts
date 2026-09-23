@@ -89,6 +89,7 @@ export const RUN_SECTIONS = [
   { id: "gates", sign: "blue", label: "GATES" },
   { id: "off-piste", sign: "black", label: "OFF-PISTE" },
   { id: "gear-check", sign: "double", label: "GEAR CHECK" },
+  { id: "podium", sign: "podium", label: "PODIUM" },
   { id: "finish", sign: "finish", label: "FINISH" },
 ] as const;
 

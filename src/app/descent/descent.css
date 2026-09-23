@@ -562,7 +562,9 @@ html:has(.descent) body {
     -0.012em -0.012em 0 var(--snow);
   transform-origin: 0 100%;
   transform: translateY(calc(var(--p) * -12vh)) scale(calc(1 - 0.15 * var(--p)));
-  will-change: transform;
+  /* recede while the start lights take centre stage (p 0.5 → 0.6) */
+  opacity: calc(1 - 0.85 * clamp(0, (var(--p) - 0.5) * 10, 1));
+  will-change: transform, opacity;
 }
 
 .summit__line {
@@ -623,14 +625,18 @@ html:has(.descent) body {
   opacity: calc(1 - var(--p) * 8);
 }
 
+/* Direct child of the sticky pin, so it's centred on the viewport (not the
+   content column) for the whole time the lights are coming on. */
 .countdown {
   position: absolute;
-  left: var(--gutter);
-  bottom: 28px;
+  inset: calc(var(--hud-h) + 0px) 0 0;
+  z-index: 2;
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  gap: clamp(8px, 1.2vw, 16px);
   visibility: hidden;
+  pointer-events: none;
 }
 
 .summit:not([data-step="-1"]) .countdown {
@@ -640,11 +646,11 @@ html:has(.descent) body {
 .countdown__light {
   display: grid;
   place-items: center;
-  min-width: clamp(52px, 6vw, 72px);
-  height: clamp(52px, 6vw, 72px);
-  padding: 0 10px;
+  min-width: clamp(60px, 9vw, 120px);
+  height: clamp(60px, 9vw, 120px);
+  padding: 0 12px;
   font-family: var(--pixel);
-  font-size: clamp(20px, 2.4vw, 30px);
+  font-size: clamp(24px, 3.6vw, 48px);
   font-weight: 700;
   background: var(--snow);
   color: var(--ink);
@@ -886,6 +892,7 @@ html:has(.descent) body {
 
 .project__bar {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 12px;
   padding: 10px 16px 9px;
@@ -893,6 +900,12 @@ html:has(.descent) body {
   font-size: 12px;
   background: var(--ink);
   color: var(--snow);
+}
+
+.project__period {
+  margin-left: 10px;
+  padding-left: 10px;
+  border-left: 2px solid currentColor;
 }
 
 .project__warn {
@@ -1006,7 +1019,222 @@ html:has(.descent) body {
   color: var(--snow);
 }
 
+/* ---------------------------------------------------------------- PODIUM */
+
+.podium__kicker {
+  margin: 0 0 16px;
+  font-family: var(--pixel);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+/* Three steps stepping down left → right, newest first, like the run. One
+   hard drop-shadow traces the whole stepped silhouette. */
+.podium {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  margin: 0 0 clamp(40px, 7vh, 72px);
+  padding: 0;
+  list-style: none;
+  filter: drop-shadow(6px 6px 0 var(--ink));
+}
+
+.podium__step {
+  --tone: var(--ink);
+  --on-tone: var(--snow);
+  display: flex;
+  flex-direction: column;
+  min-height: calc(172px + (2 - var(--step)) * 44px);
+  background: var(--snow);
+  border: 3px solid var(--ink);
+}
+
+.podium__step + .podium__step {
+  margin-left: -3px;
+}
+
+.podium__step--red {
+  --tone: var(--gate-red);
+  --on-tone: var(--on-red);
+}
+
+.podium__step--blue {
+  --tone: var(--piste-blue);
+  --on-tone: var(--on-blue);
+}
+
+.podium__strip {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 10px;
+  margin: 0;
+  padding: 9px 12px 8px;
+  font-family: var(--pixel);
+  font-size: 12px;
+  background: var(--tone);
+  color: var(--on-tone);
+  border-bottom: 3px solid var(--ink);
+}
+
+.podium__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  padding: clamp(14px, 1.6vw, 20px);
+}
+
+.podium__title {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(1rem, 1.45vw, 1.3rem);
+  font-weight: 900;
+  font-stretch: 112%;
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  overflow-wrap: break-word;
+}
+
+.podium__issuer {
+  margin: 0;
+  font-family: var(--pixel);
+  font-size: 11px;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+.sheet {
+  background: var(--snow);
+  border: 3px solid var(--ink);
+  box-shadow: var(--shadow);
+}
+
+.sheet__cap {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 14px 10px;
+  font-family: var(--pixel);
+  font-size: 12px;
+  background: var(--ink);
+  color: var(--snow);
+}
+
+.sheet__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--pixel);
+  font-size: clamp(11px, 1vw, 13px);
+  line-height: 1.35;
+}
+
+.sheet__table th {
+  padding: 11px 14px 9px;
+  font-size: 10px;
+  font-weight: 400;
+  text-align: left;
+  border-bottom: 3px solid var(--ink);
+}
+
+.sheet__table td {
+  padding: 11px 14px;
+  vertical-align: top;
+}
+
+.sheet__table tbody tr + tr td {
+  border-top: 2px dashed var(--ink);
+}
+
+.sheet__no,
+.sheet__date {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.sheet__title {
+  text-transform: uppercase;
+}
+
+.sheet__issuer {
+  width: 26%;
+}
+
+@media (max-width: 767px) {
+  .podium {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .podium__step {
+    min-height: 0;
+  }
+
+  .podium__step + .podium__step {
+    margin: -3px 0 0;
+  }
+
+  .sheet__table,
+  .sheet__table tbody {
+    display: block;
+  }
+
+  /* header row stays for screen readers, hidden visually */
+  .sheet__table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+
+  .sheet__table tr {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 6px 12px;
+    padding: 12px 14px;
+  }
+
+  .sheet__table tbody tr + tr {
+    border-top: 2px dashed var(--ink);
+  }
+
+  .sheet__table td,
+  .sheet__table tbody tr + tr td {
+    display: block;
+    width: auto;
+    padding: 0;
+    border: 0;
+  }
+
+  .sheet__no {
+    grid-row: 1 / span 2;
+  }
+
+  .sheet__title {
+    grid-column: 2 / 4;
+  }
+
+  .sheet__issuer {
+    grid-column: 2;
+  }
+
+  .sheet__date {
+    grid-column: 3;
+    text-align: right;
+  }
+}
+
 /* ---------------------------------------------------------------- FINISH */
+
+/* Run-out for the canvas finish line (drawn on its top edge) and the
+   skier's hockey stop just below it. Left empty on purpose. */
+.finish-line {
+  height: 160px;
+  margin-top: 8px;
+}
 
 .board-wrap {
   border: 3px solid var(--ink);
@@ -1305,6 +1533,10 @@ html:has(.descent) body {
     transform: none;
   }
 
+  .summit__name {
+    opacity: 1;
+  }
+
   .bib {
     transform: rotate(-2deg);
   }
@@ -1362,6 +1594,7 @@ html:has(.descent) body {
   .descent .summit__drop,
   .descent .skip-link,
   .descent .gate__pole,
+  .descent .finish-line,
   .descent .d-footer {
     display: none;
   }
@@ -1389,6 +1622,7 @@ html:has(.descent) body {
   .descent .summit__name,
   .descent .bib {
     transform: none;
+    opacity: 1;
   }
 
   .summit__name {
@@ -1421,7 +1655,8 @@ html:has(.descent) body {
       .sec-head__plate,
       .bib,
       .summit__about,
-      .board-wrap
+      .board-wrap,
+      .sheet
     ) {
     box-shadow: none;
   }
@@ -1437,8 +1672,41 @@ html:has(.descent) body {
   }
 
   .project,
-  .edu__card {
+  .edu__card,
+  .podium__step,
+  .sheet__table tr {
     break-inside: avoid;
+  }
+
+  .podium {
+    display: block;
+    margin-bottom: 12pt;
+    filter: none;
+  }
+
+  .podium__step {
+    min-height: 0;
+    margin: 0 0 6pt;
+    border-width: 1px;
+  }
+
+  .podium__step + .podium__step {
+    margin-left: 0;
+  }
+
+  .podium__strip,
+  .sheet__cap {
+    background: none;
+    color: inherit;
+    border-bottom: 1px solid #000;
+  }
+
+  .podium__body {
+    padding: 6pt 8pt;
+  }
+
+  .sheet {
+    border-width: 1px;
   }
 
   .gear__chip {

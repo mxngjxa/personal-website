@@ -6,19 +6,19 @@ export const RESUME_DATA: ResumeData = {
   location: "New York Metropolitan Area",
   locationLink: "https://www.google.com/maps/place/New+York+Metropolitan+Area",
   about:
-    "Trilingual ML/AI Engineer specializing in NLP, model evaluation, and production-grade classification systems.",
+    "Trilingual Research Engineer specializing in RL infrastructure and agentic evaluation at scale.",
   summary: (
     <>
-      Experienced Trilingual ML/AI Engineer with expertise in NLP, model
-      evaluation, and advanced classification systems, delivering reliable,
-      production-grade models. Currently architecting multi-agent,
-      cross-department solutions at micro1 while pursuing MS in Quantum
-      Computing, combining cutting-edge research with scalable enterprise
-      deployment across international markets.
+      Trilingual Research Engineer specializing in RL infrastructure and agentic
+      evaluation at scale (rollout orchestration, multi-provider sandboxing, and
+      grading harnesses) sustaining thousands of concurrent coding agents.
+      Currently core R&D at micro1 while pursuing an MS in Quantum Computing,
+      with prior production ML experience in multilingual NLP, classification,
+      and model evaluation across international markets.
     </>
   ),
   avatarUrl: "https://avatars.githubusercontent.com/mxngjxa?v=4",
-  personalWebsiteUrl: "https://github.com/mxngjxa",
+  personalWebsiteUrl: "https://mguan.org",
   contact: {
     email: "mingjia.guan@outlook.com",
     tel: "+18453212480",
@@ -41,45 +41,43 @@ export const RESUME_DATA: ResumeData = {
       degree: "MS in Quantum Computing",
       start: "2025",
       end: "2027",
+      startDate: "2025-09",
+      endDate: "2027-12",
     },
     {
       school: "Fei Tian College - Northern Campus",
       degree: "BS in Data Science, magna cum laude | GPA: 3.80",
       start: "2023",
       end: "2025",
+      startDate: "2023-01",
+      endDate: "2025-05",
     },
   ],
   work: [
     {
       company: "micro1, Inc.",
       link: "https://micro1.ai",
-      badges: ["AI Engineering", "RAG", "Multi-Agent", "LLM"],
-      title: "Member of Technical Staff, AI Engineering",
+      badges: [
+        "RL Infra",
+        "Agentic Eval",
+        "E2B / Modal / Daytona",
+        "GCP / AWS",
+      ],
+      title: "Member of Technical Staff, Research Engineering",
       start: "2025",
       end: null,
+      startDate: "2025-12",
+      endDate: null,
       description: (
         <>
-          Led R&D and cross-functional delivery of multi-tenant RAG chatbot
-          platform and multimodal ML systems, coordinating 4–5 QA teams
-          simultaneously while reporting directly to C-suite on product
-          strategy, technical roadmaps, and go-to-market execution.
-        </>
-      ),
-    },
-    {
-      company: "MG Solutions",
-      link: "https://solutions.mguan.org",
-      badges: ["DevOps", "Docker", "Nginx", "Self-Hosted"],
-      title: "DevOps Engineer",
-      start: "2025",
-      end: null,
-      description: (
-        <>
-          Migrated SMB clients from vendor-locked platforms (GoDaddy, Microsoft
-          365) to self-hosted VPS infrastructure over 2–5 month engagements,
-          architecting Docker-based environments with Nginx reverse proxy,
-          Cloudflare DDoS protection, and Prometheus monitoring that eliminated
-          recurring SaaS costs while maintaining 99.5% uptime.
+          Core research engineer owning in-house RL rollout infrastructure on
+          GCP/AWS: orchestrated 3.5M+ agent rollouts across E2B, Modal, and
+          Daytona, peaking at 60k+ runs/day across multi-model agentic coding
+          and non-coding pipelines. Rebuilt the rollout stack twice in 3 months
+          as customer and research needs shifted, cutting sandbox cold-start p50
+          from 111s to 23s (−79%) at sustained load. Also led R&D for
+          multi-tenant RAG and internal data-auditing platforms and drove
+          client-facing evals for Fortune 50 accounts.
         </>
       ),
     },
@@ -90,6 +88,8 @@ export const RESUME_DATA: ResumeData = {
       title: "Member of Technical Staff, ML Engineering",
       start: "2024",
       end: "2025",
+      startDate: "2024-08",
+      endDate: "2025-12",
       description: (
         <>
           Spearheaded multilingual ML classification system and cross-department
@@ -101,12 +101,33 @@ export const RESUME_DATA: ResumeData = {
       ),
     },
     {
+      company: "MG Solutions",
+      link: "https://solutions.mguan.org",
+      badges: ["DevOps", "Docker", "Nginx", "Self-Hosted"],
+      title: "Forward Deployed Engineer",
+      start: "2025",
+      end: null,
+      startDate: "2025-03",
+      endDate: null,
+      description: (
+        <>
+          Migrated SMB clients from vendor-locked platforms (GoDaddy, Microsoft
+          365) to self-hosted VPS infrastructure over 2–5 month engagements,
+          architecting Docker-based environments with Nginx reverse proxy,
+          Cloudflare DDoS protection, and Prometheus monitoring; eliminated
+          recurring SaaS costs while maintaining 99.5% uptime.
+        </>
+      ),
+    },
+    {
       company: "FTC-NC",
       link: "https://ftc.edu",
       badges: ["Teaching", "Linear Algebra", "Data Mining"],
       title: "Adjunct Instructor / Teaching Assistant",
       start: "2024",
       end: "2025",
+      startDate: "2024-01",
+      endDate: "2025-12",
       description: (
         <>
           Instructor for Linear Algebra. Collaborated with faculty to tutor Data
@@ -119,18 +140,24 @@ export const RESUME_DATA: ResumeData = {
   skills: [
     "Python",
     "TypeScript/JavaScript",
+    "Go",
     "SQL",
     "R",
-    "TensorFlow",
+    "Linux / Bash",
     "PyTorch",
+    "TensorFlow",
     "Scikit-Learn / CuML",
-    "Apache Spark / Kafka",
     "LGBM / XGBoost",
+    "Pandas / CuDF",
     "NLP / mmBERT",
+    "E2B / Modal / Daytona",
+    "Rollout Orchestration",
+    "SxS Eval Harnesses",
+    "RAG / Multi-Agent Systems",
+    "Apache Spark / Kafka / Airflow",
+    "TFX / TorchServe",
     "Docker",
     "AWS / GCP / Azure",
-    "RAG / Multi-Agent Systems",
-    "Linux / Bash",
     "PostgreSQL / MongoDB",
   ],
   projects: [
@@ -138,17 +165,71 @@ export const RESUME_DATA: ResumeData = {
       title: "Dual-Layer Bilingual (EN/ZH) Web-Filter",
       techStack: ["Python", "TensorFlow", "CuML", "CuPy", "Jieba", "Docker"],
       description:
-        "Dual-layer Chinese-English web filter for 13 sensitive categories in international K–12 markets, using linear regression token-frequency screening followed by context-aware mmBERT with per-category sensitivity tuning. Achieved 30× speedup via RAPIDS/TensorFlow GPU acceleration.",
+        "Built and deployed a two-stage EN/ZH web filter for 13 sensitive categories in K–12 markets: token-frequency screening feeds a context-aware mmBERT transformer with per-category sensitivity tuning. Training runs 30× faster via RAPIDS/TensorFlow GPU acceleration, served through a containerized end-to-end TFX pipeline.",
+      period: "Jan – Nov 2025",
     },
     {
       title: "LSH Recommendation System",
-      techStack: ["Python", "JAX", "Redis", "PostgreSQL"],
+      techStack: ["Python", "JAX", "Redis"],
       description:
-        "Open-source Locality Sensitive Hashing library implementing hyperplane hashing with a modular pipeline for vectorization, signature generation, and JAX-parallelized similarity scoring. Achieves 15ms average query latency at 1M scale; pip-installable with CI/CD tooling (Ruff + UV).",
+        "Open-source, pip-installable Locality Sensitive Hashing library with hyperplane hashing, JAX-parallelized scoring, a Redis bucket store, and Ruff/UV CI/CD. ~15ms query latency at 1M scale (projected 228ms at 1B); deployed for RAG retrieval on resource-constrained hardware.",
+      period: "May 2025 – Present",
       link: {
         label: "github.com/mxngjxa/lshrs",
         href: "https://github.com/mxngjxa/lshrs",
       },
+    },
+  ],
+  awards: [
+    {
+      title: "Certificate of Department Superstar, AI Team",
+      issuer: "micro1",
+      date: "May 2026",
+    },
+    {
+      title: "Microsoft AI & ML Engineering",
+      issuer: "Microsoft",
+      date: "February 2026",
+    },
+    {
+      title: "AWS Cloud Solutions Architect",
+      issuer: "Amazon Web Services (AWS)",
+      date: "January 2026",
+    },
+    {
+      title: "IBM Deep Learning with PyTorch, Keras and TensorFlow",
+      issuer: "IBM",
+      date: "November 2025",
+    },
+    {
+      title: "(MLH) Best Use of Google Gemini API",
+      issuer: "HackRPI 2025",
+      date: "November 2025",
+    },
+    {
+      title: "Advanced Machine Learning on Google Cloud",
+      issuer: "Google Cloud",
+      date: "November 2024",
+    },
+    {
+      title: "Natural Language Processing (NLP) Specialization",
+      issuer: "DeepLearning.AI",
+      date: "November 2024",
+    },
+    {
+      title: "Deep Learning Specialization",
+      issuer: "DeepLearning.AI",
+      date: "October 2024",
+    },
+    {
+      title: "IBM Data Engineering Professional Certificate",
+      issuer: "IBM",
+      date: "September 2024",
+    },
+    {
+      title: "5× Dean's List, 3× Department Academic Excellence Award",
+      issuer: "FTC-NC",
+      date: "as of May 2025",
     },
   ],
 } as const;

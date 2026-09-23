@@ -4,67 +4,49 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a **Minimalist CV/Resume web application** built with Next.js 14, React, TypeScript, and Tailwind CSS. The app renders a clean, print-friendly CV layout with data configured in a single file.
+Personal site for mguan.org. The home page is **DESCENT**, a neo-brutalist, pixel-art ski-run
+presentation of the résumé (design spec: `docs/ski-descent-spec.md`). Next.js 16 App Router with
+`output: "export"` (fully static, no server), React 19, TypeScript, plain CSS. There is no
+Tailwind, no component library, and no API route.
 
 ## Commands
 
-### Development
 ```bash
-bun dev           # Start development server on http://localhost:3000
-bun run build     # Create production build
-bun run start     # Start production server
-bun run lint      # Run Biome linting checks
-bun run lint:fix  # Run Biome linting with auto-fix
-bun run format    # Check code formatting with Biome
-bun run format:fix # Format code with Biome
-bun run check     # Run both linting and formatting checks
-bun run check:fix # Run both linting and formatting with auto-fix
+bun dev            # Dev server on http://localhost:3000 (predev renders the resume PDF)
+bun run build      # Static export to out/ (prebuild renders the resume PDF)
+bun run resume     # Re-render public/resume.pdf from the LaTeX source
+bun run check      # Biome lint + format check (src/)
+bun run check:fix  # Biome lint + format with auto-fix
+bunx tsc --noEmit  # Type-check
 ```
 
-### Docker Deployment
-```bash
-docker compose build     # Build the container
-docker compose up -d     # Run the container
-docker compose down      # Stop the container
-```
-
-**Note**: The project uses **Biome.js** for linting and formatting instead of ESLint and Prettier. Always run `bun run check:fix` before committing to ensure code quality.
+The project uses **Biome** (not ESLint/Prettier). Run `bun run check:fix` before committing.
+There is no `start` script: static export has no Next server, so preview a build by serving `out/`.
 
 ## Architecture
 
-### Project Structure
-- **`/src/app/`** - Next.js App Router pages and layouts
-- **`/src/components/`** - Reusable UI components (using shadcn/ui)
-- **`/src/data/resume-data.tsx`** - Single configuration file for all CV content
-- **`/src/apollo/`** - GraphQL server setup with resolvers and type definitions
-- **`/src/images/logos/`** - Company logo components
+- `src/data/resume-data.tsx`: the single source of résumé content (`RESUME_DATA`), typed by
+  `src/lib/types.ts`. Keep it in sync with the LaTeX résumé.
+- `src/app/page.tsx`: the DESCENT page; composes the components in `src/app/descent/`.
+- `src/app/descent/run-data.ts`: everything derived from `RESUME_DATA` (year range, splits,
+  name parts). Components must not hardcode résumé text.
+- `src/app/descent/descent.css`: all page styling. `src/app/globals.css` holds the color tokens
+  (`--snow`, `--ink`, `--gate-red`, ...), their `.dark` overrides, and a small base reset.
+- `src/app/layout.tsx`: fonts (Archivo, Instrument Sans, Silkscreen), metadata, theme provider.
+- `src/lib/structured-data.ts`: JSON-LD for the page.
 
-### Key Technologies
-- **Framework**: Next.js 14 with App Router
-- **Language**: TypeScript with decorators enabled
-- **Styling**: Tailwind CSS with custom theme extensions
-- **UI Components**: shadcn/ui (Radix UI based)
-- **GraphQL**: Apollo Server with type-graphql at `/graphql` endpoint
-- **Command Palette**: cmdk library for keyboard navigation
-- **Print Optimization**: Custom print styles in global CSS
+`work[].start`/`end` and `education[].start`/`end` are year strings (`end: null` = present) that
+drive the altimeter and timing board. Optional `startDate`/`endDate` ("YYYY-MM") carry month
+precision. `awards` renders as the PODIUM section (latest three as podium steps, the rest as a results sheet).
 
-### Important Files
-- **`src/data/resume-data.tsx`** - Main configuration file containing all CV data (personal info, work experience, education, skills, projects)
-- **`src/app/page.tsx`** - Main resume page component that renders the CV
-- **`src/app/layout.tsx`** - Root layout with metadata and analytics
-- **`src/components/command-menu.tsx`** - Keyboard shortcuts (Cmd+K) for navigation
-- **`src/components/print-drawer.tsx`** - Print functionality component
+## Resume PDF (replaces the old /classic web CV)
+The `/classic` route was removed. The "RESUME PDF" links (HUD and the finish section) open `/resume.pdf` in a new tab.
+- `bun run resume` (also run by `predev`/`prebuild`) compiles `$RESUME_SRC_DIR/resume.tex` (default `$HOME/Work/resume`) with `latexmk` into `.cache/resume/` (gitignored), then copies the PDF to `public/resume.pdf`. It never writes into the source folder. If the compile fails it exits non-zero and leaves `public/resume.pdf` as it was.
+- `public/resume.pdf` is committed. CI has no LaTeX source, so the script is a no-op there and the build ships the committed copy. After editing the .tex, run `bun run resume` and commit the updated PDF.
+- The output is reproducible: `SOURCE_DATE_EPOCH` is set from the .tex mtime, so re-rendering an unchanged source produces no git diff.
 
-## Development Notes
+## Deployment
 
-### Adding New Sections
-To add new sections to the CV, modify the `RESUME_DATA` object in `src/data/resume-data.tsx`. The layout automatically adjusts based on the data provided.
-
-### GraphQL API
-The app exposes a GraphQL endpoint at `/graphql` that serves the resume data. This can be used to integrate the CV data with other applications.
-
-### Print Optimization
-The app includes special print styles to ensure the CV looks good when printed. Test print functionality when making layout changes.
-
-### Deployment
-The app is optimized for Vercel deployment but can be deployed anywhere that supports Next.js applications. Docker support is included for containerized deployments.
+Pushing to `main` triggers `.github/workflows/firebase-deploy.yml`: `bun install --frozen-lockfile`,
+`bun run build`, then Firebase Hosting deploys `out/` (config in `firebase.json`). Change
+dependencies only with `bun add` / `bun remove` so `bun.lock` stays consistent.

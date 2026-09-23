@@ -13,6 +13,10 @@ const CHECKER = [0, 1, 2, 3, 4].flatMap((r) =>
   [0, 1, 2, 3, 4].filter((c) => (r + c) % 2 === 0).map((c) => [r, c])
 );
 
+/** Pixel medal: a red/blue V ribbon over an ink disc with a plate glint. */
+const RIBBON = "M1 0h3v1h1v1h1v2H4V3H3V2H2V1H1z";
+const MEDAL = "M4 4h4v1h1v1h1v4H9v1H8v1H4v-1H3v-1H2V6h1V5h1z";
+
 function shapes(kind: SignKind): ReactNode {
   switch (kind) {
     case "green":
@@ -38,6 +42,19 @@ function shapes(kind: SignKind): ReactNode {
             fill="var(--sign-ink)"
           />
           <path d="M6 1h1v1h1v2H7v1H6V4H5V2h1z" fill="var(--sign-plate)" />
+        </>
+      );
+    case "podium":
+      return (
+        <>
+          <path d={RIBBON} fill="var(--gate-red)" />
+          <path
+            d={RIBBON}
+            fill="var(--piste-blue)"
+            transform="matrix(-1 0 0 1 12 0)"
+          />
+          <path d={MEDAL} fill="var(--sign-ink)" />
+          <path d="M4 6h2v1H5v1H4z" fill="var(--sign-plate)" />
         </>
       );
     case "finish":

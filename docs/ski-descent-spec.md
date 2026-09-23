@@ -101,6 +101,9 @@ a red dot tracking progress. Signs are links (anchor jump, smooth scroll respect
 5. **◆◆ DOUBLE BLACK — "GEAR CHECK"** (skills). A grid of pixel-bordered stickers (each skill a chip
    with slight random-but-deterministic rotation, seeded by index), like stickers slapped on a ski.
    Hover: rotation snaps to 0 and chip jumps.
+5b. **PODIUM** (`awards`), pixel-medal sign. The latest three sit on a 3-step podium that steps
+   down left to right, newest first. These are sequence numbers, not placings. The rest go in a
+   results sheet table (#, award, issuer, date) that stacks into rows under 768px.
 6. **BASE LODGE — "FINISH"** (education + contact).
    - Timing board: a black LED-style board (Silkscreen, ink bg, gate-red/ice text) listing splits:
      each work + education entry as a row `SPLIT  COMPANY/SCHOOL  START–END`. Final row `FINISH  MINGJIA GUAN  2023 → NOW`.

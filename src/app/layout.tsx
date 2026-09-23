@@ -1,4 +1,3 @@
-import { Analytics } from "@vercel/analytics/react";
 import type { Metadata, Viewport } from "next";
 import { Archivo, Instrument_Sans, Silkscreen } from "next/font/google";
 
@@ -32,7 +31,7 @@ const silkscreen = Silkscreen({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://mguan.org"),
+  metadataBase: new URL(RESUME_DATA.personalWebsiteUrl),
   title: {
     default: `${RESUME_DATA.name} - ${RESUME_DATA.about}`,
     template: `%s | ${RESUME_DATA.name}`,
@@ -43,10 +42,12 @@ export const metadata: Metadata = {
     "cv",
     "portfolio",
     RESUME_DATA.name,
-    "ML engineer",
-    "AI engineer",
-    "NLP",
+    "research engineer",
+    "RL infrastructure",
+    "agentic evaluation",
+    "reinforcement learning",
     "machine learning",
+    "NLP",
   ],
   authors: [{ name: RESUME_DATA.name }],
   creator: RESUME_DATA.name,
@@ -111,7 +112,6 @@ export default function RootLayout({
           <ErrorBoundary>{children}</ErrorBoundary>
         </Providers>
       </body>
-      <Analytics />
     </html>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { runState } from "./run-state";
 import { clamp, invalidate, type ScrollFrame } from "./scroll-engine";
 import {
   BAYER4,
@@ -9,6 +10,12 @@ import {
   PINES,
   SKIER_CARVE_LEFT,
   SKIER_CARVE_RIGHT,
+  SKIER_PARK_LEFT,
+  SKIER_PARK_RIGHT,
+  SKIER_SKID_LEFT,
+  SKIER_SKID_RIGHT,
+  SKIER_STOP_LEFT,
+  SKIER_STOP_RIGHT,
   SKIER_TUCK,
 } from "./sprites";
 import { prefersReducedMotion, useScrollFrame } from "./use-scroll-progress";
@@ -22,8 +29,23 @@ const PIXEL = 4;
 /** Max trail rows kept (1 row = 1 canvas pixel of page height). */
 const TRAIL_CAP = 4000;
 const FLAKE_COUNT = 120;
-const SPRAY_CAP = 48;
+/** Spray particle pool (carve spray + the finish burst share it). */
+const SPRAY_CAP = 112;
+/** floats per particle: x, y, vx, vy, life, world(0|1), size, floor */
+const SPRAY_STRIDE = 8;
 const MOBILE_BP = 768;
+
+/* Finish-line hockey stop, all in canvas rows (1 row = 1 canvas px). */
+/** Rows of carve set-up above the line. */
+const FINISH_APPROACH = 64;
+/** Skid length: skis go sideways this far past the brake point. */
+const STOP_D = 24;
+/** Fraction of the braking scroll spent swinging the skis round. */
+const SKID_END = 0.3;
+/** Extra scroll after the full stop before the skier stands up. */
+const PARK_AFTER = 28;
+const BURST = 72;
+const BURST_MS = 1000;
 
 /* ------------------------------------------------------------------------- */
 /* Colour packing (ImageData is RGBA bytes; we write 32-bit words)            */
@@ -71,7 +93,11 @@ interface Palette {
   flakeSky: number;
   flakeSlope: number;
   spray: number;
+  /** denser clumps in the finish burst, so it reads on white snow */
+  sprayClump: number;
   outline: number;
+  finishA: number;
+  finishB: number;
   sprite: Record<string, number>;
   night: boolean;
 }
@@ -114,7 +140,10 @@ function buildPalette(night: boolean): Palette {
       flakeSky: pack("#e9eef3"),
       flakeSlope: pack("#9fb2c6"),
       spray: pack("#c6d4e3"),
+      sprayClump: pack("#f4f8fb"),
       outline: pack("#e9eef3"),
+      finishA: pack("#e9eef3"),
+      finishB: pack("#27374d"),
       sprite: sprite("#ff4a3d", "#b8231a", "#4f74ff"),
       night,
     };
@@ -138,7 +167,10 @@ function buildPalette(night: boolean): Palette {
     flakeSky: pack("#ffffff"),
     flakeSlope: pack("#aebfd0"),
     spray: pack("#b7c8d7"),
+    sprayClump: pack("#8fa6bb"),
     outline: 0,
+    finishA: pack("#0b0d10"),
+    finishB: pack("#ffffff"),
     sprite: sprite("#ff2e1f", "#b81a10", "#1640ff"),
     night,
   };
@@ -160,10 +192,23 @@ function bake(s: CompiledSprite, pal: Palette): BakedSprite {
   return { w: s.w, h: s.h, px, outline: s.outline };
 }
 
+const SKIER_BITMAPS = {
+  tuck: SKIER_TUCK,
+  left: SKIER_CARVE_LEFT,
+  right: SKIER_CARVE_RIGHT,
+  skidL: SKIER_SKID_LEFT,
+  skidR: SKIER_SKID_RIGHT,
+  stopL: SKIER_STOP_LEFT,
+  stopR: SKIER_STOP_RIGHT,
+  parkL: SKIER_PARK_LEFT,
+  parkR: SKIER_PARK_RIGHT,
+};
+type SkierPose = keyof typeof SKIER_BITMAPS;
+
 const COMPILED = {
-  tuck: compileSprite(SKIER_TUCK),
-  left: compileSprite(SKIER_CARVE_LEFT),
-  right: compileSprite(SKIER_CARVE_RIGHT),
+  skier: Object.fromEntries(
+    Object.entries(SKIER_BITMAPS).map(([k, b]) => [k, compileSprite(b)])
+  ) as Record<SkierPose, CompiledSprite>,
   pines: PINES.map(compileSprite),
 };
 
@@ -234,7 +279,7 @@ interface Scene {
   mobile: boolean;
   reduced: boolean;
   pal: Palette;
-  skier: { tuck: BakedSprite; left: BakedSprite; right: BakedSprite };
+  skier: Record<SkierPose, BakedSprite>;
   pines: BakedSprite[];
   /** skier sprite top, in screen rows */
   anchorRow: number;
@@ -250,9 +295,23 @@ interface Scene {
   heroScroll: number;
   stars: Array<[number, number, number]>;
   flakes: Float32Array; // x, y, speed, depth, phase
-  spray: Float32Array; // x, y, vx, vy, life
+  spray: Float32Array; // see SPRAY_STRIDE
   sprayHead: number;
-  pose: "tuck" | "left" | "right";
+  pose: SkierPose;
+  /** page row of the finish line (-1 = no finish on this page) */
+  finishRow: number;
+  /** feet row where the skis start to come round */
+  brakeRow: number;
+  /** feet row where the skier comes to rest */
+  stopRow: number;
+  /** -1: skis end pointing to the viewer's left, 1: right */
+  stopDir: number;
+  /** canvas x of the line between the finish posts */
+  finishX: number;
+  /** previous frame's feet row past brakeRow (NaN = unknown) */
+  lastDu: number;
+  /** keep drawing every frame until this rAF time (finish burst) */
+  burstUntil: number;
   lastY: number;
   lastDraw: number;
   layoutKey: string;
@@ -263,11 +322,9 @@ function readPalette(): Palette {
 }
 
 function bakeAll(scene: Scene) {
-  scene.skier = {
-    tuck: bake(COMPILED.tuck, scene.pal),
-    left: bake(COMPILED.left, scene.pal),
-    right: bake(COMPILED.right, scene.pal),
-  };
+  scene.skier = Object.fromEntries(
+    Object.entries(COMPILED.skier).map(([k, c]) => [k, bake(c, scene.pal)])
+  ) as Record<SkierPose, BakedSprite>;
   scene.pines = COMPILED.pines.map((p) => bake(p, scene.pal));
 }
 
@@ -401,6 +458,42 @@ function measure(scene: Scene, f: ScrollFrame) {
         x = a.x + (b.x - a.x) * s;
       }
       pathX[r] = clamp(x, halfW, vw - halfW) / PX;
+    }
+  }
+  // --- finish line: carve in, hockey stop just past the line, then park.
+  scene.finishRow = -1;
+  scene.lastDu = Number.NaN;
+  const fin = document.querySelector<HTMLElement>("[data-finish-line]");
+  const finR = fin?.getBoundingClientRect();
+  if (finR && (finR.width > 0 || finR.height > 0)) {
+    const lineRow = Math.round((finR.top + scrollY) / PX);
+    const brake = lineRow + 2;
+    const stop = brake + STOP_D;
+    if (brake > FINISH_APPROACH && stop < rows) {
+      const lo = halfW / PX;
+      const hi = (vw - halfW) / PX;
+      const xb = pathX[brake];
+      // Skis come round with the tips toward the middle of the page.
+      const dir = xb > W / 2 ? -1 : 1;
+      // Set-up: swing out, then carve back toward the tips' side so the
+      // last turn flows into the stop.
+      const amp = mobile ? 6 : 10;
+      const a0 = brake - FINISH_APPROACH;
+      for (let r = a0; r <= brake; r++) {
+        const t = (r - a0) / FINISH_APPROACH;
+        pathX[r] = clamp(pathX[r] - dir * amp * Math.sin(Math.PI * t), lo, hi);
+      }
+      // Skidding: a little sideways drift toward the tips, then rest.
+      const drift = 3;
+      for (let r = brake + 1; r < rows; r++) {
+        const t = Math.min(1, (r - brake) / STOP_D);
+        pathX[r] = clamp(xb + dir * drift * t * (2 - t), lo, hi);
+      }
+      scene.finishRow = lineRow;
+      scene.brakeRow = brake;
+      scene.stopRow = stop;
+      scene.stopDir = dir;
+      scene.finishX = Math.round(pathX[lineRow]);
     }
   }
   scene.pathX = pathX;
@@ -665,14 +758,35 @@ function drawTrail(
   maskBottom: number
 ) {
   const { buf, W, H, visited, pathX, pal } = scene;
+  const fin = scene.finishRow >= 0;
   let prev = -1;
   for (let sy = Math.max(0, clipTop); sy < H; sy++) {
     const r = scrollRow + sy;
-    if (r < 0 || r >= visited.length || !visited[r]) {
+    if (
+      r < 0 ||
+      r >= visited.length ||
+      !visited[r] ||
+      (fin && r > scene.stopRow)
+    ) {
       prev = -1;
       continue;
     }
     const x = Math.round(pathX[r]);
+    if (fin && r > scene.brakeRow) {
+      // Hockey-stop skid: the two tracks smear into one sideways scrape as
+      // the skis come round. Dithered in page space so it doesn't shimmer.
+      const t = (r - scene.brakeRow) / STOP_D;
+      const hw = Math.round(3 + t * 8);
+      const by = (r & 3) << 2;
+      const fill = 0.3 + 0.65 * t;
+      for (let xx = x - hw; xx <= x + hw; xx++) {
+        if (xx < 0 || xx >= W) continue;
+        const edge = xx === x - hw || xx === x + hw;
+        if (edge || BAYER4[by | (xx & 3)] < fill) buf[sy * W + xx] = pal.trail;
+      }
+      prev = x;
+      continue;
+    }
     // tracks run behind the skier's body, not through it
     if (sy >= maskTop && sy <= maskBottom) {
       prev = x;
@@ -688,6 +802,67 @@ function drawTrail(
     }
     prev = x;
   }
+}
+
+/** Reduced motion: the skier holds a static lane near the right edge. */
+function reducedX(scene: Scene): number {
+  return (scene.vw - (scene.vw >= 1024 ? 132 : 44)) / scene.PX;
+}
+
+/** Checkered finish strip across the slope, with a striped post each side. */
+function drawFinish(scene: Scene, scrollRow: number, clipTop: number) {
+  if (scene.finishRow < 0) return;
+  const { buf, W, H, pal } = scene;
+  const top = scene.finishRow - scrollRow - 2;
+  if (top + 4 <= clipTop || top - 14 >= H) return;
+  for (let y = 0; y < 4; y++) {
+    const sy = top + y;
+    if (sy < clipTop || sy >= H) continue;
+    const row = sy * W;
+    for (let x = 0; x < W; x++) {
+      buf[row + x] = ((x >> 1) + (y >> 1)) & 1 ? pal.finishA : pal.finishB;
+    }
+  }
+  const red = pal.sprite.R;
+  const white = pal.sprite.W;
+  const ink = pal.night ? pal.outline : pal.sprite.K;
+  const cx = scene.reduced ? Math.round(reducedX(scene)) : scene.finishX;
+  for (const side of [-1, 1]) {
+    const px = clamp(cx + side * 16, 1, W - 3);
+    for (let y = -14; y < 4; y++) {
+      const sy = top + y;
+      if (sy < clipTop || sy >= H) continue;
+      // cap, red/white bands, planted foot
+      const c = y === -14 ? ink : ((y + 14) >> 1) & 1 ? white : red;
+      buf[sy * W + px] = c;
+      buf[sy * W + px + 1] = c;
+    }
+  }
+}
+
+function emitSpray(
+  scene: Scene,
+  x: number,
+  y: number,
+  vx: number,
+  vy: number,
+  life: number,
+  world: number,
+  size: number,
+  floor = Number.POSITIVE_INFINITY
+) {
+  const sp = scene.spray;
+  const k = scene.sprayHead * SPRAY_STRIDE;
+  scene.sprayHead = (scene.sprayHead + 1) % SPRAY_CAP;
+  sp[k] = x;
+  sp[k + 1] = y;
+  sp[k + 2] = vx;
+  sp[k + 3] = vy;
+  sp[k + 4] = life;
+  sp[k + 5] = world;
+  sp[k + 6] = size;
+  // particles that fall back below this row have landed in the snow
+  sp[k + 7] = floor;
 }
 
 function draw(scene: Scene, f: ScrollFrame) {
@@ -712,27 +887,63 @@ function draw(scene: Scene, f: ScrollFrame) {
   }
 
   drawTrees(scene, scrollRow, clipTop);
+  drawFinish(scene, scrollRow, clipTop);
 
   // --- skier
-  const sprite = scene.skier.tuck;
-  const feetScreenRow = scene.anchorRow + sprite.h - 1;
-  const feetRow = scrollRow + feetScreenRow;
+  const feetScreenRow = scene.anchorRow + scene.skier.tuck.h - 1;
+  // Where the feet would be if the run never ended: pinned to the camera.
+  const runRow = scrollRow + feetScreenRow;
+  const fin = scene.finishRow >= 0;
+  const brakeLen = 2 * STOP_D;
+  const du = fin ? runRow - scene.brakeRow : -1;
+  // Hockey stop, purely a function of scroll: constant deceleration from
+  // the brake point, so the skier drifts up the screen and comes to rest
+  // at stopRow, then rides up with the page.
+  let feetRow = runRow;
+  // 0 running · 1 skid · 2 stop · 3 parked
+  let stage = 0;
+  if (fin && scene.reduced) {
+    if (runRow >= scene.stopRow) {
+      feetRow = scene.stopRow;
+      stage = 3;
+    }
+  } else if (fin && du > 0) {
+    feetRow =
+      du >= brakeLen
+        ? scene.stopRow
+        : Math.round(scene.brakeRow + du - (du * du) / (4 * STOP_D));
+    stage = du >= brakeLen + PARK_AFTER ? 3 : du >= brakeLen * SKID_END ? 2 : 1;
+  }
+  runState.speed =
+    stage === 3 ? 0 : stage > 0 ? clamp(1 - du / brakeLen, 0, 1) : 1;
+  const feetScreen = feetRow - scrollRow;
+  const side = scene.stopDir < 0 ? "L" : "R";
   let skierX: number;
-  let pose: Scene["pose"] = "tuck";
+  let pose: SkierPose = "tuck";
   let slope = 0;
 
   if (scene.reduced) {
-    skierX = (scene.vw - (scene.vw >= 1024 ? 132 : 44)) / PX;
+    skierX = reducedX(scene);
+    if (stage === 3) pose = `park${side}`;
   } else {
     const n = scene.pathX.length;
     const at = (r: number) => scene.pathX[clamp(r, 0, n - 1)];
     skierX = at(feetRow);
-    slope = (at(feetRow + 6) - at(feetRow - 6)) / 12;
-    const a = Math.abs(slope);
-    if (heroP < 0.04 && scrollRow < 4) pose = "tuck";
-    else if (scene.pose === "tuck")
-      pose = a > 0.16 ? (slope > 0 ? "right" : "left") : "tuck";
-    else pose = a < 0.1 ? "tuck" : slope > 0 ? "right" : "left";
+    if (stage > 0) {
+      pose =
+        stage === 1
+          ? `skid${side}`
+          : stage === 2
+            ? `stop${side}`
+            : `park${side}`;
+    } else {
+      slope = (at(feetRow + 6) - at(feetRow - 6)) / 12;
+      const a = Math.abs(slope);
+      if (heroP < 0.04 && scrollRow < 4) pose = "tuck";
+      else if (scene.pose === "tuck")
+        pose = a > 0.16 ? (slope > 0 ? "right" : "left") : "tuck";
+      else pose = a < 0.1 ? "tuck" : slope > 0 ? "right" : "left";
+    }
     scene.pose = pose;
 
     // carve the trail
@@ -754,43 +965,104 @@ function draw(scene: Scene, f: ScrollFrame) {
       scene,
       scrollRow,
       Math.max(clipTop, 0),
-      scene.anchorRow + 2,
-      feetScreenRow
+      feetScreen - scene.skier[pose].h + 3,
+      feetScreen
     );
   }
 
   const body = scene.skier[pose];
   const left = Math.round(skierX - body.w / 2);
-  const top = feetScreenRow - body.h + 1;
+  const top = feetScreen - body.h + 1;
 
-  // --- snow spray off the tails while carving hard
+  // --- snow spray: off the tails while carving, a sheet of it through the
+  // skid, and one big burst the moment the skis bite at the finish.
   if (!scene.reduced) {
     const speed = Math.abs(f.vy);
-    const sp = scene.spray;
-    if (pose !== "tuck" && speed > 0.2 && f.vy > 0) {
+    if ((pose === "left" || pose === "right") && speed > 0.2 && f.vy > 0) {
       const dir = pose === "right" ? -1 : 1;
       const count = speed > 1 ? 3 : 1;
       for (let i = 0; i < count; i++) {
-        const k = scene.sprayHead * 5;
-        scene.sprayHead = (scene.sprayHead + 1) % SPRAY_CAP;
-        sp[k] = skierX + dir * (4 + Math.random() * 3);
-        sp[k + 1] = feetScreenRow - 1 - Math.random() * 3;
         // a fan of powder thrown uphill, falling back under gravity
-        sp[k + 2] = dir * (0.006 + Math.random() * 0.03);
-        sp[k + 3] = -(0.012 + Math.random() * 0.04);
-        sp[k + 4] = 380 + Math.random() * 200;
+        emitSpray(
+          scene,
+          skierX + dir * (4 + Math.random() * 3),
+          feetScreen - 1 - Math.random() * 3,
+          dir * (0.006 + Math.random() * 0.03),
+          -(0.012 + Math.random() * 0.04),
+          380 + Math.random() * 200,
+          0,
+          1
+        );
       }
     }
+    if ((stage === 1 || stage === 2) && du < brakeLen && f.vy > 0.05) {
+      // Sheet of snow off the edges while the skis scrape sideways.
+      for (let i = 0; i < 2; i++) {
+        const along = Math.random() * 2 - 1;
+        emitSpray(
+          scene,
+          skierX + along * 9,
+          feetRow - 1 - Math.random() * 2,
+          along * 0.02 + (Math.random() - 0.5) * 0.02,
+          -(0.02 + Math.random() * 0.04),
+          360 + Math.random() * 220,
+          1,
+          1,
+          feetRow + 1
+        );
+      }
+    }
+    const th = brakeLen * SKID_END;
+    if (
+      fin &&
+      scene.lastDu < th &&
+      du >= th &&
+      feetScreen > -8 &&
+      feetScreen < H + 24
+    ) {
+      // The stop: fan a big burst of powder up the hill from the skis.
+      for (let i = 0; i < BURST; i++) {
+        const along = Math.random() * 2 - 1;
+        const ang = Math.PI * (1.06 + Math.random() * 0.88);
+        const v = 0.04 + Math.random() * 0.07;
+        emitSpray(
+          scene,
+          skierX + along * 10,
+          feetRow - 1 - Math.random() * 3,
+          Math.cos(ang) * v + along * 0.02 + scene.stopDir * 0.008,
+          Math.sin(ang) * v - 0.01,
+          550 + Math.random() * 450,
+          1,
+          Math.random() < 0.5 ? 2 : 1,
+          feetRow + 1
+        );
+      }
+      scene.burstUntil = f.t + BURST_MS;
+    }
+    scene.lastDu = du;
+
+    const sp = scene.spray;
     for (let i = 0; i < SPRAY_CAP; i++) {
-      const k = i * 5;
+      const k = i * SPRAY_STRIDE;
       if (sp[k + 4] <= 0) continue;
       sp[k + 4] -= f.dt;
       sp[k] += sp[k + 2] * f.dt;
       sp[k + 1] += sp[k + 3] * f.dt;
       sp[k + 3] += 0.00018 * f.dt;
+      if (sp[k + 1] > sp[k + 7]) {
+        sp[k + 4] = 0;
+        continue;
+      }
       const x = Math.round(sp[k]);
-      const y = Math.round(sp[k + 1]);
-      if (x >= 0 && x < W && y >= clipTop && y < H) buf[y * W + x] = pal.spray;
+      const y = Math.round(sp[k + 1] - (sp[k + 5] ? scrollRow : 0));
+      const size = sp[k + 6];
+      const c = size > 1 ? pal.sprayClump : pal.spray;
+      for (let yy = y; yy < y + size; yy++) {
+        if (yy < clipTop || yy >= H) continue;
+        for (let xx = x; xx < x + size; xx++) {
+          if (xx >= 0 && xx < W) buf[yy * W + xx] = c;
+        }
+      }
     }
   }
 
@@ -874,9 +1146,16 @@ export function PixelRun() {
       heroScroll: 1,
       stars: [],
       flakes,
-      spray: new Float32Array(SPRAY_CAP * 5),
+      spray: new Float32Array(SPRAY_CAP * SPRAY_STRIDE),
       sprayHead: 0,
       pose: "tuck",
+      finishRow: -1,
+      brakeRow: 0,
+      stopRow: 0,
+      stopDir: -1,
+      finishX: 0,
+      lastDu: Number.NaN,
+      burstUntil: 0,
       lastY: window.scrollY,
       lastDraw: 0,
       layoutKey: "",
@@ -912,7 +1191,9 @@ export function PixelRun() {
       const scene = sceneRef.current;
       if (!scene?.img) return false;
       if (f.scrolling || !lastMoveRef.current) lastMoveRef.current = f.t;
-      if (f.scrolling || scene.reduced) {
+      // The finish burst plays in real time: full frame rate until it's
+      // done, then the idle/park logic below takes over again.
+      if (f.scrolling || scene.reduced || f.t < scene.burstUntil) {
         scene.lastDraw = f.t;
         draw(scene, f);
         return !scene.reduced;

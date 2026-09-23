@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useEffect, useRef, useState } from "react";
+import { runState } from "./run-state";
 import { clamp } from "./scroll-engine";
 import { useScrollFrame } from "./use-scroll-progress";
 
@@ -37,7 +38,8 @@ export function Hud({
     // Year ticks over evenly across the run; the base lodge shows BASE_YEAR.
     const span = yearTop - yearBase + 1;
     const yr = Math.max(yearBase, yearTop - Math.floor(p * span * 0.999));
-    const spd = Math.round(clamp(Math.abs(f.vy) * 42, 0, 112));
+    // runState.speed eases to 0 through the finish hockey stop.
+    const spd = Math.round(clamp(Math.abs(f.vy) * 42, 0, 112) * runState.speed);
     const l = last.current;
     if (alt !== l.alt) {
       l.alt = alt;
@@ -84,9 +86,14 @@ export function Hud({
         </span>
         <span className="hud__spacer" />
         <NightSkiToggle />
-        <Link href="/classic" className="hud__link hud__wide">
-          CLASSIC CV <span aria-hidden="true">↗</span>
-        </Link>
+        <a
+          href="/resume.pdf"
+          className="hud__link hud__wide"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          RESUME PDF <span aria-hidden="true">↗</span>
+        </a>
       </div>
     </header>
   );

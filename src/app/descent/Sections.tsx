@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import { RESUME_DATA } from "@/data/resume-data";
 import { reactToString } from "@/lib/types";
@@ -239,6 +238,9 @@ export function OffPiste() {
                 <div className="project__bar">
                   <span className="project__num">
                     LINE {String(i + 1).padStart(2, "0")}
+                    {p.period ? (
+                      <span className="project__period">{p.period}</span>
+                    ) : null}
                   </span>
                   <span className="project__warn">
                     <TrailSign kind="black" size={12} />
@@ -332,6 +334,101 @@ export function GearCheck() {
 }
 
 /* ------------------------------------------------------------------------- */
+/* PODIUM — awards & certifications                                           */
+/* ------------------------------------------------------------------------- */
+
+const PODIUM_TONES = ["red", "blue", "ink"] as const;
+const num = (i: number) => String(i + 1).padStart(2, "0");
+
+/**
+ * Awards aren't placings: the three steps are simply the latest three, in
+ * résumé order, stepping down like the run itself. The rest is the sheet.
+ */
+export function Podium() {
+  const awards = RESUME_DATA.awards;
+  const top = awards.slice(0, 3);
+  const rest = awards.slice(3);
+
+  return (
+    <section
+      id="podium"
+      className="run-sec"
+      data-run="podium"
+      data-lane="0.84"
+      data-lane-m="0.3"
+      aria-labelledby="podium-title"
+    >
+      <div className="d-container">
+        <div className="d-measure">
+          <SectionHead
+            sign="podium"
+            kicker="PODIUM · RESULTS"
+            title="Podium"
+            id="podium-title"
+          />
+
+          <p className="podium__kicker">
+            {awards.length} AWARDS &amp; CERTIFICATIONS · NEWEST FIRST
+          </p>
+          <ol className="podium" data-reveal={true}>
+            {top.map((a, i) => (
+              <li
+                key={`${a.title}-${a.date}`}
+                className={`podium__step podium__step--${PODIUM_TONES[i]}`}
+                style={{ "--step": i } as Vars}
+              >
+                <p className="podium__strip">
+                  <span>#{num(i)}</span>
+                  <span>{a.date}</span>
+                </p>
+                <div className="podium__body">
+                  <h3 className="podium__title">{a.title}</h3>
+                  <p className="podium__issuer">{a.issuer}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+
+          {rest.length > 0 ? (
+            <div className="sheet" data-reveal={true}>
+              <div className="sheet__cap" aria-hidden="true">
+                <span>RESULTS SHEET</span>
+                <span>
+                  #{num(top.length)}–#{num(awards.length - 1)}
+                </span>
+              </div>
+              <table className="sheet__table">
+                <caption className="sr-only">
+                  More awards and certifications, newest first
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">AWARD</th>
+                    <th scope="col">ISSUER</th>
+                    <th scope="col">DATE</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rest.map((a, i) => (
+                    <tr key={`${a.title}-${a.date}`}>
+                      <td className="sheet__no">{num(i + top.length)}</td>
+                      <td className="sheet__title">{a.title}</td>
+                      <td className="sheet__issuer">{a.issuer}</td>
+                      <td className="sheet__date">{a.date}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------------- */
 /* BASE LODGE — FINISH                                                        */
 /* ------------------------------------------------------------------------- */
 
@@ -357,6 +454,14 @@ export function Finish({ baseYear }: { baseYear: number }) {
             id="finish-title"
           />
 
+          {/* The canvas paints the checkered finish line along this box's top
+              edge; the skier hockey-stops in the run-out below it. */}
+          <div
+            className="finish-line"
+            data-finish-line={true}
+            aria-hidden="true"
+          />
+
           <div className="board-wrap" data-reveal={true}>
             <div className="board__cap" aria-hidden="true">
               <span>OFFICIAL TIMING</span>
@@ -368,7 +473,9 @@ export function Finish({ baseYear }: { baseYear: number }) {
               </caption>
               <thead>
                 <tr>
-                  <th scope="col">SPLIT</th>
+                  <th scope="col" className="board__split">
+                    SPLIT
+                  </th>
                   <th scope="col">GATE</th>
                   <th scope="col">TIME</th>
                 </tr>
@@ -434,9 +541,14 @@ export function Finish({ baseYear }: { baseYear: number }) {
                 </li>
               ))}
               <li>
-                <Link className="brut-btn" href="/classic">
-                  CLASSIC CV <Arrow />
-                </Link>
+                <a
+                  className="brut-btn"
+                  href="/resume.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  RESUME PDF <Arrow />
+                </a>
               </li>
             </ul>
           </div>

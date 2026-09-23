@@ -16,6 +16,7 @@ import {
   Gates,
   GearCheck,
   OffPiste,
+  Podium,
   RunFooter,
   TheLine,
 } from "./descent/Sections";
@@ -31,6 +32,7 @@ export const metadata: Metadata = {
     description: RESUME_DATA.about,
     type: "profile",
     locale: "en_US",
+    url: RESUME_DATA.personalWebsiteUrl,
   },
   twitter: {
     card: "summary_large_image",
@@ -80,11 +82,12 @@ export default function DescentPage() {
           <Gates />
           <OffPiste />
           <GearCheck />
+          <Podium />
           <Finish baseYear={BASE_YEAR} />
         </main>
         <RunFooter />
         <p className="print-note">
-          A printer-friendly version of this résumé lives at mguan.org/classic
+          A printer-friendly PDF of this résumé lives at mguan.org/resume.pdf
         </p>
       </div>
     </>

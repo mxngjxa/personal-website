@@ -20,7 +20,7 @@ export function generatePersonStructuredData() {
       telephone: RESUME_DATA.contact.tel,
       contactType: "personal",
     },
-    jobTitle: "ML/AI Engineer",
+    jobTitle: "Research Engineer",
     worksFor:
       RESUME_DATA.work.length > 0
         ? {
@@ -40,13 +40,14 @@ export function generatePersonStructuredData() {
         "@type": "Place",
         name: RESUME_DATA.location,
       },
-      occupationalCategory: "Machine Learning Engineering",
+      occupationalCategory: "Research and Machine Learning Engineering",
       estimatedSalary: {
         "@type": "MonetaryAmountDistribution",
         name: "Professional software engineer",
       },
     })),
     knowsAbout: RESUME_DATA.skills,
+    award: RESUME_DATA.awards.map((a) => `${a.title} (${a.issuer}, ${a.date})`),
   };
 }
 
@@ -56,12 +57,12 @@ export function generateWebPageStructuredData() {
     "@type": "WebPage",
     name: `${RESUME_DATA.name} - Resume`,
     description: RESUME_DATA.about,
-    url: "https://mguan.org",
+    url: RESUME_DATA.personalWebsiteUrl,
     inLanguage: "en-US",
     isPartOf: {
       "@type": "WebSite",
       name: `${RESUME_DATA.name}'s Professional Resume`,
-      url: "https://mguan.org",
+      url: RESUME_DATA.personalWebsiteUrl,
     },
     about: {
       "@type": "Person",
@@ -81,6 +82,6 @@ export function generateResumeStructuredData() {
     about: generatePersonStructuredData(),
     name: `${RESUME_DATA.name} - Professional Resume`,
     description: `Professional resume and portfolio of ${RESUME_DATA.name}, ${RESUME_DATA.about}`,
-    url: "https://mguan.org",
+    url: RESUME_DATA.personalWebsiteUrl,
   };
 }
