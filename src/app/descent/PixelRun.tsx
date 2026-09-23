@@ -825,8 +825,12 @@ function draw(scene: Scene, f: ScrollFrame) {
 /* Component                                                                  */
 /* ------------------------------------------------------------------------- */
 
+const IDLE_FRAME_MS = 66;
+const IDLE_PARK_MS = 12_000;
+
 export function PixelRun() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const lastMoveRef = useRef(0);
   const sceneRef = useRef<Scene | null>(null);
 
   useEffect(() => {
@@ -907,13 +911,20 @@ export function PixelRun() {
     (f) => {
       const scene = sceneRef.current;
       if (!scene?.img) return false;
-      // Idle snowfall only needs ~30fps; scrolling gets every frame.
-      if (!f.scrolling && !scene.reduced && f.t - scene.lastDraw < 31) {
-        return true;
+      if (f.scrolling || !lastMoveRef.current) lastMoveRef.current = f.t;
+      if (f.scrolling || scene.reduced) {
+        scene.lastDraw = f.t;
+        draw(scene, f);
+        return !scene.reduced;
       }
+      // Idle: snowfall at ~15fps, then park the loop so an untouched tab
+      // doesn't burn battery. Scrolling or invalidate() wakes it again.
+      const idleFor = f.t - lastMoveRef.current;
+      const animating = idleFor < IDLE_PARK_MS;
+      if (animating && f.t - scene.lastDraw < IDLE_FRAME_MS) return true;
       scene.lastDraw = f.t;
       draw(scene, f);
-      return !scene.reduced;
+      return animating;
     },
     (f) => {
       const scene = sceneRef.current;

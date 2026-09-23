@@ -98,32 +98,12 @@ function NightSkiToggle() {
   useEffect(() => setMounted(true), []);
   const night = mounted && resolvedTheme === "dark";
 
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      const t = e.target;
-      if (
-        e.key.toLowerCase() !== "d" ||
-        e.metaKey ||
-        e.ctrlKey ||
-        e.altKey ||
-        t instanceof HTMLInputElement ||
-        t instanceof HTMLTextAreaElement ||
-        (t instanceof HTMLElement && t.isContentEditable)
-      ) {
-        return;
-      }
-      setTheme(resolvedTheme === "dark" ? "light" : "dark");
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [resolvedTheme, setTheme]);
-
   return (
     <button
       type="button"
       className="hud__toggle"
       aria-pressed={night}
-      title="Toggle night skiing (D)"
+      title="Toggle night skiing"
       onClick={() => setTheme(night ? "light" : "dark")}
     >
       NIGHT SKI{" "}
