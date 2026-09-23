@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "personal-website-74629",
     "public": "out",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "cleanUrls": true,
