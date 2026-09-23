@@ -1,6 +1,5 @@
-import React from "react";
-import { ShieldBadge } from "@/components/ui/shield-badge";
 import { Section } from "@/components/ui/section";
+import { ShieldBadge } from "@/components/ui/shield-badge";
 import { cn } from "@/lib/utils";
 
 type Skills = readonly string[];

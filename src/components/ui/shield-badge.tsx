@@ -7,7 +7,11 @@ interface BadgeConfig {
 const BADGE_MAP: Record<string, BadgeConfig> = {
   // Languages
   python: { color: "3776AB", logo: "python", logoColor: "fff" },
-  "typescript/javascript": { color: "3178C6", logo: "typescript", logoColor: "fff" },
+  "typescript/javascript": {
+    color: "3178C6",
+    logo: "typescript",
+    logoColor: "fff",
+  },
   typescript: { color: "3178C6", logo: "typescript", logoColor: "fff" },
   javascript: { color: "F7DF1E", logo: "javascript", logoColor: "000" },
   sql: { color: "4479A1", logo: "mysql", logoColor: "fff" },
@@ -20,7 +24,11 @@ const BADGE_MAP: Record<string, BadgeConfig> = {
   tensorflow: { color: "FF6F00", logo: "tensorflow", logoColor: "fff" },
   pytorch: { color: "EE4C2C", logo: "pytorch", logoColor: "fff" },
   jax: { color: "A020F0", logoColor: "fff" },
-  "scikit-learn / cuml": { color: "F7931E", logo: "scikitlearn", logoColor: "fff" },
+  "scikit-learn / cuml": {
+    color: "F7931E",
+    logo: "scikitlearn",
+    logoColor: "fff",
+  },
   "lgbm / xgboost": { color: "189AB4", logoColor: "fff" },
   "nlp / mmbert": { color: "412991", logo: "openai", logoColor: "fff" },
   nlp: { color: "412991", logoColor: "fff" },
@@ -34,7 +42,11 @@ const BADGE_MAP: Record<string, BadgeConfig> = {
   cuml: { color: "76B900", logo: "nvidia", logoColor: "fff" },
   cupy: { color: "76B900", logo: "nvidia", logoColor: "fff" },
   jieba: { color: "DE2910", logoColor: "fff" },
-  "apache spark / kafka": { color: "E25A1C", logo: "apachespark", logoColor: "fff" },
+  "apache spark / kafka": {
+    color: "E25A1C",
+    logo: "apachespark",
+    logoColor: "fff",
+  },
 
   // Cloud / DevOps
   docker: { color: "2496ED", logo: "docker", logoColor: "fff" },
@@ -48,7 +60,11 @@ const BADGE_MAP: Record<string, BadgeConfig> = {
   linux: { color: "FCC624", logo: "linux", logoColor: "000" },
 
   // Databases
-  "postgresql / mongodb": { color: "4169E1", logo: "postgresql", logoColor: "fff" },
+  "postgresql / mongodb": {
+    color: "4169E1",
+    logo: "postgresql",
+    logoColor: "fff",
+  },
   postgresql: { color: "4169E1", logo: "postgresql", logoColor: "fff" },
   mongodb: { color: "47A248", logo: "mongodb", logoColor: "fff" },
   redis: { color: "FF4438", logo: "redis", logoColor: "fff" },

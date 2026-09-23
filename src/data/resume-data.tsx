@@ -94,8 +94,8 @@ export const RESUME_DATA: ResumeData = {
         <>
           Spearheaded multilingual ML classification system and cross-department
           automation R&D for content classification and student wellness
-          products, deploying multi-tiered models achieving 96%+ F1 score /
-          98%+ accuracy / sub-400ms latency for the Taiwanese market; built 10+
+          products, deploying multi-tiered models achieving 96%+ F1 score / 98%+
+          accuracy / sub-400ms latency for the Taiwanese market; built 10+
           internal automations scaling infrastructure for 3× sales growth.
         </>
       ),

@@ -7,7 +7,9 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": ["src/**/*"]
+    "includes": [
+      "src/**/*"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -73,7 +75,10 @@
         "useFilenamingConvention": {
           "level": "error",
           "options": {
-            "filenameCases": ["kebab-case", "PascalCase"]
+            "filenameCases": [
+              "kebab-case",
+              "PascalCase"
+            ]
           }
         },
         "useForOf": "error",
@@ -137,6 +142,11 @@
       "lineEnding": "lf",
       "lineWidth": 80,
       "trailingCommas": "none"
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
     }
   }
 }
