@@ -1,6 +1,6 @@
 import { Analytics } from "@vercel/analytics/react";
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Archivo, Instrument_Sans, Silkscreen } from "next/font/google";
 
 import "./globals.css";
 import type React from "react";
@@ -8,9 +8,27 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { Providers } from "@/components/providers";
 import { RESUME_DATA } from "@/data/resume-data";
 
-const inter = Inter({
+// Display: trail-signage headlines (variable width axis for font-stretch).
+const archivo = Archivo({
+  subsets: ["latin"],
+  axes: ["wdth"],
+  display: "swap",
+  variable: "--font-display",
+});
+
+// Body copy.
+const instrumentSans = Instrument_Sans({
   subsets: ["latin"],
   display: "swap",
+  variable: "--font-body",
+});
+
+// Pixel utility face for the HUD, labels and the timing board.
+const silkscreen = Silkscreen({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  display: "swap",
+  variable: "--font-pixel",
 });
 
 export const metadata: Metadata = {
@@ -69,8 +87,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "white" },
-    { media: "(prefers-color-scheme: dark)", color: "black" },
+    { media: "(prefers-color-scheme: light)", color: "#EEF2F5" },
+    { media: "(prefers-color-scheme: dark)", color: "#0A0E14" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -83,7 +101,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.className} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${archivo.variable} ${instrumentSans.variable} ${silkscreen.variable}`}
+      suppressHydrationWarning={true}
+    >
       <body>
         <Providers>
           <ErrorBoundary>{children}</ErrorBoundary>

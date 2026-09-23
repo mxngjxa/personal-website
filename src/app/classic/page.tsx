@@ -5,15 +5,16 @@ import { SectionErrorBoundary } from "@/components/section-error-boundary";
 import { SectionSkeleton } from "@/components/section-skeleton";
 import { RESUME_DATA } from "@/data/resume-data";
 import { generateResumeStructuredData } from "@/lib/structured-data";
-import { Education } from "./components/Education";
-import { Header } from "./components/Header";
-import { Projects } from "./components/Projects";
-import { Skills } from "./components/Skills";
-import { Summary } from "./components/Summary";
-import { WorkExperience } from "./components/WorkExperience";
+import { Education } from "../components/Education";
+import { Header } from "../components/Header";
+import { Projects } from "../components/Projects";
+import { Skills } from "../components/Skills";
+import { Summary } from "../components/Summary";
+import { WorkExperience } from "../components/WorkExperience";
 
 export const metadata: Metadata = {
-  title: `${RESUME_DATA.name} - Resume`,
+  title: `${RESUME_DATA.name} - Classic CV`,
+  alternates: { canonical: "https://mguan.org/classic" },
   description: RESUME_DATA.about,
   openGraph: {
     title: `${RESUME_DATA.name} - Resume`,
@@ -50,7 +51,7 @@ function getCommandMenuLinks() {
   ];
 }
 
-export default function ResumePage() {
+export default function ClassicResumePage() {
   const structuredData = generateResumeStructuredData();
 
   return (

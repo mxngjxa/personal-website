@@ -65,6 +65,34 @@
   }
 }
 
+/* DESCENT tokens — day on the hill / night skiing under floodlights. */
+:root {
+  --snow: #eef2f5;
+  --ink: #0b0d10;
+  --gate-red: #ff2e1f;
+  --piste-blue: #1640ff;
+  --ice: #a9dbff;
+  --piste-green: #00a651;
+  /* text that sits on a red / blue fill (AA in both themes) */
+  --on-red: #0b0d10;
+  --on-blue: #ffffff;
+  /* trail signs are always white boards with black symbols */
+  --sign-ink: #0b0d10;
+  --sign-plate: #ffffff;
+  --shadow: 6px 6px 0 var(--ink);
+  --shadow-lg: 9px 9px 0 var(--ink);
+}
+
+.dark {
+  --snow: #0a0e14;
+  --ink: #e9eef3;
+  --gate-red: #ff4a3d;
+  --piste-blue: #4f74ff;
+  --ice: #1b2b3f;
+  --on-red: #0a0e14;
+  --on-blue: #0a0e14;
+}
+
 @layer base {
   * {
     border-color: hsl(var(--border));
@@ -72,6 +100,9 @@
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
+    font-family:
+      var(--font-body), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+      sans-serif;
   }
 }
 
