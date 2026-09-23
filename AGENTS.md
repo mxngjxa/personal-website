@@ -16,11 +16,16 @@ Notes for any coding agent (Claude Code, Codex, etc.) working in this repo.
   bunx firebase-tools@15.30.2 deploy --only hosting --account mingjia.guan@gmail.com
   ```
 
-- CI (`.github/workflows/firebase-deploy.yml`) deploys on every push to `main` using the
-  `FIREBASE_TOKEN` repo secret. That token expired on 2026-09-23 (HTTP 401). Regenerate it **with
-  the Gmail account** (`bunx firebase-tools@15.30.2 login:ci`) and store it with
-  `gh secret set FIREBASE_TOKEN -R mxngjxa/personal-website`. `--token` auth is deprecated by
-  Firebase; a service-account key is the long-term fix.
+- CI (`.github/workflows/firebase-deploy.yml`) deploys on every push to `main` (or manual
+  `workflow_dispatch`) with **keyless Workload Identity Federation**: GitHub's OIDC token is
+  exchanged for short-lived credentials of `github-deploy@personal-website-74629.iam.gserviceaccount.com`
+  (Firebase Hosting Admin only). The pool/provider only accept `mxngjxa/personal-website` on
+  `refs/heads/main`. No secrets or keys are involved. One-time setup, run by a project Owner:
+  `bash scripts/setup-ci-wif.sh` (idempotent). The old `FIREBASE_TOKEN` secret is obsolete.
+- **Account migration (in progress, 2026-09-23):** ownership is moving from `mingjia.guan@gmail.com`
+  to `jacky@mguan.org` by transferring the existing project (not rebuilding it), so the site,
+  custom domain and SSL cert are untouched. Owner can't be granted by CLI on an org-less project:
+  invite `jacky@mguan.org` as Owner in the Cloud Console IAM page and accept the email invite.
 - `firebase-tools` is pinned (15.30.2) in the workflow; an unpinned `bunx firebase-tools` broke a
   deploy once. Bump it deliberately.
 - `www.mguan.org` has no DNS record; only the apex `mguan.org` resolves. Link to the apex.

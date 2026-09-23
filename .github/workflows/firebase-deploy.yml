@@ -4,6 +4,17 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+
+# Keyless auth: GitHub's OIDC token is exchanged for short-lived credentials
+# of github-deploy@ via Workload Identity Federation (scripts/setup-ci-wif.sh).
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: firebase-deploy
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -21,7 +32,11 @@ jobs:
       - name: Build
         run: bun run build
 
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/162323591265/locations/global/workloadIdentityPools/github/providers/github-oidc
+          service_account: github-deploy@personal-website-74629.iam.gserviceaccount.com
+
       - name: Deploy to Firebase Hosting
-        run: bunx firebase-tools@15.30.2 deploy --only hosting --token "$FIREBASE_TOKEN" --non-interactive
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: bunx firebase-tools@15.30.2 deploy --only hosting --project personal-website-74629 --non-interactive
