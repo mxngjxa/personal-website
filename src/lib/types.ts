@@ -38,6 +38,8 @@ export interface ResumeData {
     startDate?: string;
     endDate?: string | null;
     description: string | React.ReactNode;
+    /** Scannable résumé bullets, rendered as the gate card's list. */
+    highlights: string[];
   }>;
   skills: string[];
   projects: Array<{

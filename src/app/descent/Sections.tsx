@@ -187,7 +187,11 @@ export function Gates() {
                       ) : null}
                     </div>
                     <p className="gate__title">{job.title}</p>
-                    <p className="gate__desc">{job.description}</p>
+                    <ul className="gate__points">
+                      {job.highlights.map((h) => (
+                        <li key={h}>{h}</li>
+                      ))}
+                    </ul>
                     <ul className="chips" aria-label="Focus areas">
                       {job.badges.map((b) => (
                         <li key={b} className="chip">

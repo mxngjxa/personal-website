@@ -80,6 +80,11 @@ export const RESUME_DATA: ResumeData = {
           client-facing evals for Fortune 50 accounts.
         </>
       ),
+      highlights: [
+        "Own in-house RL rollout infrastructure on GCP/AWS as core research engineer: 3.5M+ agent rollouts across E2B/Modal/Daytona, peaking at 60k+ runs/day across multi-model agentic coding and non-coding pipelines.",
+        "Rebuilt the rollout stack twice in 3 months as customer and research needs shifted; migrated execution environments to Daytona/Modal, cutting sandbox cold-start p50\u00a0111s\u00a0→\u00a023s (−79%) at sustained load.",
+        "Led R&D for multi-tenant RAG and internal data-auditing platforms; drove client-facing evals for Fortune\u00a050 accounts.",
+      ],
     },
     {
       company: "Deledao Technologies Corp.",
@@ -99,6 +104,11 @@ export const RESUME_DATA: ResumeData = {
           internal automations scaling infrastructure for 3× sales growth.
         </>
       ),
+      highlights: [
+        "Spearheaded multilingual ML classification system R&D for content classification and student wellness products.",
+        "Deployed multi-tiered models for the Taiwanese market at 96%+ F1, 98%+ accuracy, and sub-400ms latency.",
+        "Built 10+ internal automations through cross-department R&D, scaling infrastructure for 3× sales growth.",
+      ],
     },
     {
       company: "MG Solutions",
@@ -118,6 +128,11 @@ export const RESUME_DATA: ResumeData = {
           recurring SaaS costs while maintaining 99.5% uptime.
         </>
       ),
+      highlights: [
+        "Migrated SMB clients off vendor-locked platforms (GoDaddy, Microsoft 365) to self-hosted VPS infrastructure over 2–5\u00a0month engagements.",
+        "Architected Docker-based environments with Nginx reverse proxy, Cloudflare DDoS protection, and Prometheus monitoring.",
+        "Eliminated recurring SaaS costs while maintaining 99.5% uptime.",
+      ],
     },
     {
       company: "FTC-NC",
@@ -135,6 +150,11 @@ export const RESUME_DATA: ResumeData = {
           feedback and exam prep, and create QMD/LaTeX lecture materials.
         </>
       ),
+      highlights: [
+        "Taught Linear Algebra as instructor.",
+        "Collaborated with faculty to tutor Data Mining and Data Structures & Algorithms students.",
+        "Delivered coursework feedback and exam prep; created QMD/LaTeX lecture materials.",
+      ],
     },
   ],
   skills: [

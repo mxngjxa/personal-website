@@ -36,6 +36,7 @@ export function generatePersonStructuredData() {
     hasOccupation: RESUME_DATA.work.map((job) => ({
       "@type": "Occupation",
       name: job.title,
+      description: job.highlights.join(" "),
       occupationLocation: {
         "@type": "Place",
         name: RESUME_DATA.location,

@@ -845,9 +845,32 @@ html:has(.descent) body {
   font-weight: 600;
 }
 
-.gate__desc {
+.gate__points {
   margin: 0 0 16px;
-  line-height: 1.55;
+  padding: 0;
+  list-style: none;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.gate__points li {
+  position: relative;
+  padding-left: 18px;
+}
+
+.gate__points li + li {
+  margin-top: 6px;
+}
+
+/* pixel bullet: a hard 6px square in the gate's color */
+.gate__points li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 6px;
+  height: 6px;
+  background: var(--gate);
 }
 
 .live {
@@ -1658,6 +1681,19 @@ html:has(.descent) body {
 
   .gate + .gate {
     margin-top: 14pt;
+  }
+
+  .gate__points {
+    padding-left: 14pt;
+    list-style: square;
+  }
+
+  .gate__points li {
+    padding-left: 0;
+  }
+
+  .gate__points li::before {
+    content: none;
   }
 
   .project,
