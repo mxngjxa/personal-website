@@ -40,3 +40,6 @@ next-env.d.ts
 
 # resume PDF build cache (scripts/sync-resume.sh)
 .cache/
+
+# firebase deploy cache
+.firebase/
