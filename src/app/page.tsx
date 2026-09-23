@@ -83,7 +83,7 @@ export default function DescentPage() {
           <OffPiste />
           <GearCheck />
           <Podium />
-          <Finish baseYear={BASE_YEAR} />
+          <Finish />
         </main>
         <RunFooter />
         <p className="print-note">

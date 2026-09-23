@@ -106,7 +106,7 @@ a red dot tracking progress. Signs are links (anchor jump, smooth scroll respect
    results sheet table (#, award, issuer, date) that stacks into rows under 768px.
 6. **BASE LODGE — "FINISH"** (education + contact).
    - Timing board: a black LED-style board (Silkscreen, ink bg, gate-red/ice text) listing splits:
-     each work + education entry as a row `SPLIT  COMPANY/SCHOOL  START–END`. Final row `FINISH  MINGJIA GUAN  2023 → NOW`.
+     each work + education entry as a row `SPLIT  COMPANY/SCHOOL  START–END`.
    - Education cards (brutal).
    - Big CTA: `SAY HI` mailto button in gate-red, plus socials.
    - Footer line in Silkscreen: `© 2026 MINGJIA GUAN · BUILT FOR THE DESCENT · CHAIRLIFT BACK UP ↑`

@@ -1320,17 +1320,6 @@ html:has(.descent) body {
   color: #ff4a3d;
 }
 
-.board tfoot td {
-  padding-block: 16px;
-  border-top: 3px solid #a9dbff;
-  color: #05070a;
-  background: #a9dbff;
-}
-
-.board tfoot .board__time {
-  color: #05070a;
-}
-
 .finish__sub {
   margin: clamp(48px, 8vh, 80px) 0 20px;
   font-family: var(--pixel);

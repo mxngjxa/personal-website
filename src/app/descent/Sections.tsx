@@ -436,7 +436,7 @@ export function Podium() {
 /* BASE LODGE — FINISH                                                        */
 /* ------------------------------------------------------------------------- */
 
-export function Finish({ baseYear }: { baseYear: number }) {
+export function Finish() {
   const splits = buildSplits();
   const { email, social } = RESUME_DATA.contact;
 
@@ -498,13 +498,6 @@ export function Finish({ baseYear }: { baseYear: number }) {
                   </tr>
                 ))}
               </tbody>
-              <tfoot>
-                <tr>
-                  <td className="board__split">FINISH</td>
-                  <td className="board__who">{NAME.plain}</td>
-                  <td className="board__time">{baseYear} → NOW</td>
-                </tr>
-              </tfoot>
             </table>
           </div>
 
