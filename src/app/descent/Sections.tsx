@@ -527,7 +527,11 @@ export function Finish({ baseYear }: { baseYear: number }) {
 
           <div className="cta">
             <p className="cta__kicker">LIFT LINE IS OPEN</p>
-            <a className="say-hi" href={`mailto:${email}`}>
+            <a
+              className="say-hi"
+              href={`mailto:${email}`}
+              data-wave-spot={true}
+            >
               Say hi <span aria-hidden="true">→</span>
               <span className="sr-only"> — email {email}</span>
             </a>

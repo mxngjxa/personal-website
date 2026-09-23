@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useEffect, useRef, useState } from "react";
-import { runState } from "./run-state";
+import { runState, WALK_KMH } from "./run-state";
 import { clamp } from "./scroll-engine";
 import { useScrollFrame } from "./use-scroll-progress";
 
@@ -38,8 +38,14 @@ export function Hud({
     // Year ticks over evenly across the run; the base lodge shows BASE_YEAR.
     const span = yearTop - yearBase + 1;
     const yr = Math.max(yearBase, yearTop - Math.floor(p * span * 0.999));
-    // runState.speed eases to 0 through the finish hockey stop.
-    const spd = Math.round(clamp(Math.abs(f.vy) * 42, 0, 112) * runState.speed);
+    // runState.speed eases to 0 through the finish hockey stop; on foot
+    // after it the readout is a steady walking pace while the page moves.
+    const moving = Math.abs(f.vy) > 0.02;
+    const spd = runState.walking
+      ? moving
+        ? WALK_KMH
+        : 0
+      : Math.round(clamp(Math.abs(f.vy) * 42, 0, 112) * runState.speed);
     const l = last.current;
     if (alt !== l.alt) {
       l.alt = alt;

@@ -177,6 +177,190 @@ export const SKIER_SKID_RIGHT: Bitmap = mirror(SKIER_SKID_LEFT);
 export const SKIER_STOP_RIGHT: Bitmap = mirror(SKIER_STOP_LEFT);
 export const SKIER_PARK_RIGHT: Bitmap = mirror(SKIER_PARK_LEFT);
 
+/**
+ * STEP OUT: the parked pose with the viewer's-right boot lifted clear of its
+ * binding (the empty binding shows on the ski). Same grid as PARK so the
+ * swap doesn't jump.
+ */
+export const SKIER_STEPOUT_LEFT: Bitmap = [
+  "..........KKKK........",
+  ".........KWWWWK.......",
+  "........KWRRRRWK......",
+  "........KKKKKKKK......",
+  "........KIIWIIIK......",
+  "........KKIIIIKK......",
+  ".........KKFFKK.......",
+  ".......KKRRKKRRKK.....",
+  "......KRRRRRRRRRRK....",
+  ".....KRDRRRRRRRRDRK...",
+  "....KRDRRRRRRRRRRDRK..",
+  "....KRKDRRRRRRRRDKRK..",
+  "...KKKKKDRRRRRRDKKKKK.",
+  "...KKKKKBBBBBBBBKKKKK.",
+  "...G...KBBNBBNBBK...G.",
+  "...G...KBBBKKBBBK...G.",
+  "..G....KBBBKKWWWK....G",
+  "..G....KBBBKKWWWK....G",
+  "..G....KWWWKKKKKK....G",
+  ".G.....KKKKK.GGG.....G",
+  "..RRKKKKKKKKKKKKKKKKKK",
+  "RRKKKKKKKKKKKKKKKKKKK.",
+];
+export const SKIER_STEPOUT_RIGHT: Bitmap = mirror(SKIER_STEPOUT_LEFT);
+
+/*
+ * ON FOOT (after the finish). Same helmet / goggles / jacket / pants as the
+ * skier, white ski boots, no skis. Front view, walking toward the viewer.
+ * All share one 14-wide grid with the soles on the last row, so frames can
+ * be swapped without the feet jumping. The body sits in columns 1..12.
+ */
+const HEAD: Bitmap = [
+  ".....KKKK.....",
+  "....KWWWWK....",
+  "...KWRRRRWK...",
+  "...KKKKKKKK...",
+  "...KIIWIIIK...",
+  "...KKIIIIKK...",
+  "....KKFFKK....",
+];
+
+/** Standing still, arms at the sides. Also the "passing" walk frame. */
+export const WALKER_STAND: Bitmap = [
+  ...HEAD,
+  "..KKRRKKRRKK..",
+  ".KRRRRRRRRRRK.",
+  ".KRDRRRRRRDRK.",
+  ".KRKDRRRRDKRK.",
+  ".KRKRRRRRRKRK.",
+  ".KDKRRRRRRKDK.",
+  ".KKKDRRRRDKKK.",
+  "..KKBBBBBBKK..",
+  "...KBBNNBBK...",
+  "...KBBKKBBK...",
+  "...KBBKKBBK...",
+  "...KBNKKNBK...",
+  "..KWWWKKWWWK..",
+  "..KWWWKKWWWK..",
+  "..KKKKKKKKKK..",
+];
+
+/**
+ * Stride: viewer's-left boot planted, the other lifted a pixel mid-step;
+ * arms swing opposite (left hand back and hidden, right hand forward).
+ */
+export const WALKER_STEP_L: Bitmap = [
+  ...HEAD,
+  "..KKRRKKRRKK..",
+  ".KRRRRRRRRRRK.",
+  ".KRDRRRRRRDRK.",
+  ".KRKDRRRRDKRK.",
+  ".KDKRRRRRRKRK.",
+  ".KKKRRRRRRKRK.",
+  "...KDRRRRDKDK.",
+  "..KKBBBBBBKKK.",
+  "...KBBNNBBK...",
+  "...KBBKKBBK...",
+  "...KBBKKBBK...",
+  "...KBNKKWWWK..",
+  "..KWWWKKWWWK..",
+  "..KWWWKKKKKK..",
+  "..KKKKK.......",
+];
+
+/** Mirror only the body, so the goggle glint stays put while walking. */
+function mirrorBody(bitmap: Bitmap): Bitmap {
+  return [...HEAD, ...mirror(bitmap.slice(HEAD.length))];
+}
+
+export const WALKER_STEP_R: Bitmap = mirrorBody(WALKER_STEP_L);
+
+/**
+ * WAVE: right arm up, forearm rocking out (A) and upright (B). 18 wide; the
+ * body occupies the same columns as the 14-wide frames so the figure stays
+ * planted while the hand moves. B doubles as the held "still waving" pose.
+ */
+export const WALKER_WAVE_A: Bitmap = [
+  ".....KKKK.........",
+  "....KWWWWK.....KKK",
+  "...KWRRRRWK...KKKK",
+  "...KKKKKKKK..KRKKK",
+  "...KIIWIIIK.KRRK..",
+  "...KKIIIIKKKRRK...",
+  "....KKFFKK.KRK....",
+  "..KKRRKKRRKRRK....",
+  ".KRRRRRRRRRRRK....",
+  ".KRDRRRRRRDRK.....",
+  ".KRKDRRRRRDK......",
+  ".KRKRRRRRRK.......",
+  ".KDKRRRRRRK.......",
+  ".KKKDRRRRDK.......",
+  "..KKBBBBBBKK......",
+  "...KBBNNBBK.......",
+  "...KBBKKBBK.......",
+  "...KBBKKBBK.......",
+  "...KBNKKNBK.......",
+  "..KWWWKKWWWK......",
+  "..KWWWKKWWWK......",
+  "..KKKKKKKKKK......",
+];
+
+export const WALKER_WAVE_B: Bitmap = [
+  ".....KKKK...KKK...",
+  "....KWWWWK.KKKKK..",
+  "...KWRRRRWK.KKK...",
+  "...KKKKKKKK.KRK...",
+  "...KIIWIIIK.KRK...",
+  "...KKIIIIKK.KRK...",
+  "....KKFFKK.KRRK...",
+  "..KKRRKKRRKRRK....",
+  ".KRRRRRRRRRRRK....",
+  ".KRDRRRRRRDRK.....",
+  ".KRKDRRRRRDK......",
+  ".KRKRRRRRRK.......",
+  ".KDKRRRRRRK.......",
+  ".KKKDRRRRDK.......",
+  "..KKBBBBBBKK......",
+  "...KBBNNBBK.......",
+  "...KBBKKBBK.......",
+  "...KBBKKBBK.......",
+  "...KBNKKNBK.......",
+  "..KWWWKKWWWK......",
+  "..KWWWKKWWWK......",
+  "..KKKKKKKKKK......",
+];
+
+/**
+ * The skis left behind: planted upright tails-down in a little snow pile
+ * with the poles stuck in either side, like outside a lodge. (Not crossed:
+ * crossed skis on a slope is the signal for an injured skier.) Base row
+ * is the snow line.
+ */
+export const SKI_PROP: Bitmap = [
+  ".K...RR.RR..K.",
+  ".K...RR.RR..K.",
+  ".G...KK.KK..G.",
+  ".G...KK.KK..G.",
+  ".G...KK.KK..G.",
+  ".G...KK.KK..G.",
+  ".G...KK.KK..G.",
+  ".G...KK.KK..G.",
+  ".G...KK.KK..G.",
+  "..G..GW.WG.G..",
+  "..G..GG.GG.G..",
+  "..G..KK.KK.G..",
+  "..G..KK.KK.G..",
+  "..G..KK.KK.G..",
+  "..G..KK.KK.G..",
+  "..G..KK.KK.G..",
+  "..G..KK.KK.G..",
+  ".KKK.KK.KK.KKK",
+  "..G..KK.KK.G..",
+  "..G.sKK.KKsG..",
+  "...sWWWWWWWs..",
+  "..sWWWWWWWWWs.",
+  ".ssssssssssss.",
+];
+
 /** Pixel pines, snow on the branch tips. Three sizes for depth. */
 export const PINE_LARGE: Bitmap = [
   "......W......",

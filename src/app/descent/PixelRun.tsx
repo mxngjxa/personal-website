@@ -8,15 +8,23 @@ import {
   type CompiledSprite,
   compileSprite,
   PINES,
+  SKI_PROP,
   SKIER_CARVE_LEFT,
   SKIER_CARVE_RIGHT,
   SKIER_PARK_LEFT,
   SKIER_PARK_RIGHT,
   SKIER_SKID_LEFT,
   SKIER_SKID_RIGHT,
+  SKIER_STEPOUT_LEFT,
+  SKIER_STEPOUT_RIGHT,
   SKIER_STOP_LEFT,
   SKIER_STOP_RIGHT,
   SKIER_TUCK,
+  WALKER_STAND,
+  WALKER_STEP_L,
+  WALKER_STEP_R,
+  WALKER_WAVE_A,
+  WALKER_WAVE_B,
 } from "./sprites";
 import { prefersReducedMotion, useScrollFrame } from "./use-scroll-progress";
 
@@ -46,6 +54,27 @@ const SKID_END = 0.3;
 const PARK_AFTER = 28;
 const BURST = 72;
 const BURST_MS = 1000;
+
+/* After the stop: step out of the skis, walk down to SAY HI and wave. Also
+   in rows of feet travel past the brake point (du), like the stop above. */
+/** One boot comes out of its binding (parking starts at 2*STOP_D+PARK_AFTER). */
+const STEPOUT_DU = 2 * STOP_D + PARK_AFTER + 4;
+/** Skis planted upright in the snow, skier standing beside them. */
+const PLANT_DU = STEPOUT_DU + 6;
+/** First step of the walk. */
+const WALK_DU = PLANT_DU + 6;
+/** Minimum scroll (rows) the walk is spread over. */
+const MIN_WALK = 40;
+/** Path length (canvas px) per walk-cycle frame. */
+const STRIDE = 5;
+/** Columns between the planted skis and where the skier stands. */
+const PLANT_OFF = 9;
+/** Boot prints kept (two per stride). */
+const PRINT_CAP = 480;
+/** Wave frame length: ~4.5 sprite changes a second. */
+const WAVE_MS = 220;
+/** CSS px between SAY HI's border box and the skier (its shadow is 10px). */
+const WAVE_GAP = 14;
 
 /* ------------------------------------------------------------------------- */
 /* Colour packing (ImageData is RGBA bytes; we write 32-bit words)            */
@@ -202,7 +231,17 @@ const SKIER_BITMAPS = {
   stopR: SKIER_STOP_RIGHT,
   parkL: SKIER_PARK_LEFT,
   parkR: SKIER_PARK_RIGHT,
+  stepoutL: SKIER_STEPOUT_LEFT,
+  stepoutR: SKIER_STEPOUT_RIGHT,
+  stand: WALKER_STAND,
+  walkL: WALKER_STEP_L,
+  walkR: WALKER_STEP_R,
+  waveA: WALKER_WAVE_A,
+  waveB: WALKER_WAVE_B,
+  prop: SKI_PROP,
 };
+/** Walk cycle, indexed by distance travelled / STRIDE. */
+const WALK_CYCLE: readonly SkierPose[] = ["walkL", "stand", "walkR", "stand"];
 type SkierPose = keyof typeof SKIER_BITMAPS;
 
 const COMPILED = {
@@ -312,6 +351,27 @@ interface Scene {
   lastDu: number;
   /** keep drawing every frame until this rAF time (finish burst) */
   burstUntil: number;
+  /** false when there's no SAY HI spot below the finish to walk to */
+  walk: boolean;
+  /** walker centre x per page row, from walkRow0 to waveRow */
+  walkX: Float32Array;
+  /** cumulative path length (canvas px) along walkX */
+  walkDist: Float32Array;
+  /** feet row where the walk starts (just in front of the planted skis) */
+  walkRow0: number;
+  /** run row (scroll-pinned feet row) where walking starts / arrives */
+  walkStart: number;
+  arrive: number;
+  /** feet row and centre x at the SAY HI block */
+  waveRow: number;
+  waveX: number;
+  /** boot prints: [row, col] pairs in page space, in walking order */
+  prints: Int32Array;
+  printN: number;
+  /** how many prints have been walked so far (persist like the trail) */
+  printsShown: number;
+  /** the idle loop has parked: hold the still pose */
+  idle: boolean;
   lastY: number;
   lastDraw: number;
   layoutKey: string;
@@ -497,6 +557,7 @@ function measure(scene: Scene, f: ScrollFrame) {
     }
   }
   scene.pathX = pathX;
+  measureWalk(scene, f, feetScreenRow);
 
   // Layout changed → old tracks no longer line up; start a fresh trail.
   const layoutKey = `${W}x${Math.round(docH / 50)}`;
@@ -504,6 +565,7 @@ function measure(scene: Scene, f: ScrollFrame) {
     scene.layoutKey = layoutKey;
     scene.visited = new Uint8Array(Math.min(TRAIL_CAP, rows));
     scene.lastFeetRow = -1;
+    scene.printsShown = 0;
   }
 
   // --- ridge lines (summit sits under the skier at scroll 0)
@@ -591,6 +653,91 @@ function measure(scene: Scene, f: ScrollFrame) {
     }
   }
   scene.trees = trees;
+}
+
+const smooth = (t: number) => t * t * (3 - 2 * t);
+
+/**
+ * The walk from the planted skis to the spot beside SAY HI: a lane down the
+ * open side of the slope, then a turn in to stand right of the block with
+ * the soles on its bottom edge. All page-space, derived from layout only.
+ */
+function measureWalk(scene: Scene, f: ScrollFrame, feetScreenRow: number) {
+  scene.walk = false;
+  if (scene.finishRow < 0) return;
+  const spot = document.querySelector<HTMLElement>("[data-wave-spot]");
+  const sr = spot?.getBoundingClientRect();
+  if (!sr || (sr.width === 0 && sr.height === 0)) return;
+  const { PX, W, mobile } = scene;
+  const scrollY = window.scrollY;
+  const standW = COMPILED.skier.stand.w;
+  // Body is centred on column 7 of every on-foot frame.
+  const half = 7;
+  const leftPx = Math.min(sr.right + WAVE_GAP, f.vw - standW * PX - 2);
+  const waveX = Math.round(leftPx / PX) + half;
+  const waveRow = Math.round((sr.bottom + scrollY) / PX) - 1;
+
+  const propX = scene.pathX[scene.stopRow];
+  const dir = scene.stopDir;
+  const x0 = clamp(Math.round(propX + dir * PLANT_OFF), half, W - half);
+  const r0 = scene.stopRow + 2;
+  const n = waveRow - r0;
+  if (n < 30) return;
+
+  // Desktop: straight down the skier's lane (right of the text column), a
+  // touch further from the skis. Phone: the right edge, the only open strip.
+  const lane = mobile
+    ? W - half - 1
+    : clamp(Math.round(propX + dir * 16), half, W - half);
+  const lead = Math.min(n * 0.3, 50);
+  const ap = clamp(Math.abs(lane - waveX) * 0.8, 30, n * 0.5);
+  const apStart = n - ap;
+  const walkX = new Float32Array(n + 1);
+  const walkDist = new Float32Array(n + 1);
+  for (let i = 0; i <= n; i++) {
+    let x = lane;
+    if (i < lead) x = x0 + (lane - x0) * smooth(i / lead);
+    if (i > apStart) x = lane + (waveX - lane) * smooth((i - apStart) / ap);
+    walkX[i] = x;
+    if (i > 0) walkDist[i] = walkDist[i - 1] + Math.hypot(1, x - walkX[i - 1]);
+  }
+
+  // Boot prints, alternating feet, one per stride.
+  const prints = new Int32Array(PRINT_CAP * 2);
+  let pn = 0;
+  let next = STRIDE;
+  for (let i = 1; i <= n && pn < PRINT_CAP; i++) {
+    while (walkDist[i] >= next && pn < PRINT_CAP) {
+      prints[pn * 2] = r0 + i;
+      prints[pn * 2 + 1] = Math.round(walkX[i] + (pn & 1 ? 2 : -3));
+      pn++;
+      next += STRIDE;
+    }
+  }
+
+  // Scroll timing. The walk starts where the stop sequence leaves off and
+  // arrives with the spot ~70% down the screen, never later than the end
+  // of the page (so the wave is always reachable).
+  const lastRun = Math.floor(Math.max(0, f.docH - f.vh) / PX) + feetScreenRow;
+  const start = scene.brakeRow + WALK_DU;
+  let arrive = Math.min(
+    lastRun - 6,
+    Math.round((waveRow * PX - f.vh * 0.7) / PX) + feetScreenRow
+  );
+  if (arrive < start + MIN_WALK)
+    arrive = Math.min(lastRun - 6, start + MIN_WALK);
+  if (arrive < start + 10) return;
+
+  scene.walk = true;
+  scene.walkX = walkX;
+  scene.walkDist = walkDist;
+  scene.walkRow0 = r0;
+  scene.walkStart = start;
+  scene.arrive = arrive;
+  scene.waveRow = waveRow;
+  scene.waveX = waveX;
+  scene.prints = prints;
+  scene.printN = pn;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -916,6 +1063,7 @@ function draw(scene: Scene, f: ScrollFrame) {
   }
   runState.speed =
     stage === 3 ? 0 : stage > 0 ? clamp(1 - du / brakeLen, 0, 1) : 1;
+  runState.walking = false;
   const feetScreen = feetRow - scrollRow;
   const side = scene.stopDir < 0 ? "L" : "R";
   let skierX: number;
@@ -970,9 +1118,76 @@ function draw(scene: Scene, f: ScrollFrame) {
     );
   }
 
-  const body = scene.skier[pose];
-  const left = Math.round(skierX - body.w / 2);
-  const top = feetScreen - body.h + 1;
+  let body = scene.skier[pose];
+  let left = Math.round(skierX - body.w / 2);
+  let top = feetScreen - body.h + 1;
+
+  // --- off the skis: step out, plant them, walk down to SAY HI and wave.
+  // Positions are pure functions of scroll; only the wave uses the clock.
+  if (stage === 3 && scene.walk) {
+    const du3 = runRow - scene.brakeRow;
+    const outline = pal.night ? pal.outline : 0;
+    let onFoot: SkierPose | null = null;
+    let x = 0;
+    let row = 0;
+    if (scene.reduced) {
+      if (runRow >= scene.walkStart) {
+        onFoot = "stand";
+        x = scene.waveX;
+        row = scene.waveRow;
+      }
+    } else if (du3 >= PLANT_DU) {
+      const n = scene.walkX.length - 1;
+      const t = clamp(
+        (runRow - scene.walkStart) / (scene.arrive - scene.walkStart),
+        0,
+        1
+      );
+      const i = Math.round(t * n);
+      x = scene.walkX[i];
+      row = scene.walkRow0 + i;
+      const dist = scene.walkDist[i];
+      scene.printsShown = Math.max(
+        scene.printsShown,
+        Math.min(scene.printN, Math.floor(dist / STRIDE))
+      );
+      if (runRow >= scene.arrive) {
+        onFoot =
+          scene.idle || ((f.t / WAVE_MS) | 0) % 2 === 0 ? "waveB" : "waveA";
+      } else if (t > 0) {
+        onFoot = WALK_CYCLE[Math.floor(dist / STRIDE) & 3];
+        runState.walking = true;
+      } else {
+        onFoot = "stand";
+      }
+      // boot prints
+      for (let k = 0; k < scene.printsShown; k++) {
+        const sy = scene.prints[k * 2] - scrollRow;
+        const sx = scene.prints[k * 2 + 1];
+        if (sy < clipTop || sy >= H || sx < 0 || sx + 1 >= W) continue;
+        buf[sy * W + sx] = pal.trail;
+        buf[sy * W + sx + 1] = pal.trail;
+      }
+    } else if (du3 >= STEPOUT_DU) {
+      body = scene.skier[`stepout${side}`];
+    }
+    if (onFoot) {
+      // the skis stay behind, planted where he stopped
+      const prop = scene.skier.prop;
+      blit(
+        scene,
+        prop,
+        Math.round(skierX - prop.w / 2),
+        scene.stopRow - scrollRow - prop.h + 1,
+        clipTop,
+        255,
+        outline
+      );
+      body = scene.skier[onFoot];
+      left = Math.round(x) - 7;
+      top = row - scrollRow - body.h + 1;
+    }
+  }
 
   // --- snow spray: off the tails while carving, a sheet of it through the
   // skid, and one big burst the moment the skis bite at the finish.
@@ -1156,6 +1371,18 @@ export function PixelRun() {
       finishX: 0,
       lastDu: Number.NaN,
       burstUntil: 0,
+      walk: false,
+      walkX: new Float32Array(1),
+      walkDist: new Float32Array(1),
+      walkRow0: 0,
+      walkStart: 0,
+      arrive: 1,
+      waveRow: 0,
+      waveX: 0,
+      prints: new Int32Array(0),
+      printN: 0,
+      printsShown: 0,
+      idle: false,
       lastY: window.scrollY,
       lastDraw: 0,
       layoutKey: "",
@@ -1193,6 +1420,7 @@ export function PixelRun() {
       if (f.scrolling || !lastMoveRef.current) lastMoveRef.current = f.t;
       // The finish burst plays in real time: full frame rate until it's
       // done, then the idle/park logic below takes over again.
+      scene.idle = false;
       if (f.scrolling || scene.reduced || f.t < scene.burstUntil) {
         scene.lastDraw = f.t;
         draw(scene, f);
@@ -1204,6 +1432,8 @@ export function PixelRun() {
       const animating = idleFor < IDLE_PARK_MS;
       if (animating && f.t - scene.lastDraw < IDLE_FRAME_MS) return true;
       scene.lastDraw = f.t;
+      // Last frame before parking: the waver holds a still, arm-up pose.
+      scene.idle = !animating;
       draw(scene, f);
       return animating;
     },
