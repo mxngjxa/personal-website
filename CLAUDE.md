@@ -50,3 +50,7 @@ The `/classic` route was removed. The "RESUME PDF" links (HUD and the finish sec
 Pushing to `main` triggers `.github/workflows/firebase-deploy.yml`: `bun install --frozen-lockfile`,
 `bun run build`, then Firebase Hosting deploys `out/` (config in `firebase.json`). Change
 dependencies only with `bun add` / `bun remove` so `bun.lock` stays consistent.
+
+Deploy accounts, manual deploys and the CI token: see AGENTS.md (imported below).
+
+@AGENTS.md
