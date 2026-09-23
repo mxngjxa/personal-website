@@ -15,6 +15,11 @@ export interface ScrollFrame {
   /** smoothed scroll velocity in px/ms (positive = scrolling down) */
   vy: number;
   vw: number;
+  /**
+   * Stable viewport height: the large viewport (100lvh), which does not change
+   * as mobile browser toolbars slide in and out. Everything laid out against
+   * the viewport uses this, so a toolbar toggle doesn't move the scene.
+   */
   vh: number;
   /** document scroll height */
   docH: number;
@@ -38,6 +43,9 @@ const subscribers = new Set<ScrollSubscriber>();
 let raf = 0;
 let listening = false;
 let needsMeasure = true;
+/** Re-measure even if the viewport and document size look unchanged. */
+let forceMeasure = true;
+let lvhProbe: HTMLDivElement | null = null;
 let lastY = 0;
 let lastT = 0;
 let stillFrames = 0;
@@ -65,11 +73,24 @@ function loop(t: number) {
 
   if (needsMeasure) {
     needsMeasure = false;
-    frame.vw = window.innerWidth;
-    frame.vh = window.innerHeight;
-    frame.docH = document.documentElement.scrollHeight;
-    frame.y = y;
-    for (const sub of subscribers) sub.measure?.(frame);
+    const vw = window.innerWidth;
+    const vh = stableViewportHeight();
+    const docH = document.documentElement.scrollHeight;
+    // A mobile toolbar sliding in fires resize with only innerHeight changed;
+    // nothing we lay out depends on that, so skip the (expensive) re-measure.
+    if (
+      forceMeasure ||
+      vw !== frame.vw ||
+      vh !== frame.vh ||
+      docH !== frame.docH
+    ) {
+      forceMeasure = false;
+      frame.vw = vw;
+      frame.vh = vh;
+      frame.docH = docH;
+      frame.y = y;
+      for (const sub of subscribers) sub.measure?.(frame);
+    }
   }
 
   const dt = lastT ? Math.min(64, Math.max(1, t - lastT)) : 16;
@@ -101,6 +122,11 @@ function loop(t: number) {
   }
 }
 
+function stableViewportHeight(): number {
+  const h = lvhProbe?.offsetHeight ?? 0;
+  return h > 0 ? h : window.innerHeight;
+}
+
 function onScroll() {
   schedule();
 }
@@ -124,6 +150,13 @@ function start() {
   if (listening) return;
   listening = true;
   lastY = window.scrollY;
+  if (!lvhProbe && CSS.supports?.("height", "100lvh")) {
+    lvhProbe = document.createElement("div");
+    lvhProbe.setAttribute("aria-hidden", "true");
+    lvhProbe.style.cssText =
+      "position:fixed;top:0;left:0;width:0;height:100lvh;visibility:hidden;pointer-events:none";
+    document.body.appendChild(lvhProbe);
+  }
   window.addEventListener("scroll", onScroll, { passive: true });
   window.addEventListener("resize", onResize, { passive: true });
   document.addEventListener("visibilitychange", onVisibility);
@@ -133,7 +166,7 @@ function start() {
     resizeObserver = new ResizeObserver(onResize);
     resizeObserver.observe(document.body);
   }
-  document.fonts?.ready.then(onResize).catch(() => undefined);
+  document.fonts?.ready.then(invalidate).catch(() => undefined);
 }
 
 function stop() {
@@ -144,6 +177,8 @@ function stop() {
   document.removeEventListener("visibilitychange", onVisibility);
   resizeObserver?.disconnect();
   resizeObserver = null;
+  lvhProbe?.remove();
+  lvhProbe = null;
   if (raf) cancelAnimationFrame(raf);
   raf = 0;
 }
@@ -152,6 +187,7 @@ export function subscribe(sub: ScrollSubscriber): () => void {
   subscribers.add(sub);
   start();
   needsMeasure = true;
+  forceMeasure = true;
   schedule();
   return () => {
     subscribers.delete(sub);
@@ -162,6 +198,7 @@ export function subscribe(sub: ScrollSubscriber): () => void {
 /** Ask for a re-measure + frame (e.g. after a theme or media change). */
 export function invalidate() {
   needsMeasure = true;
+  forceMeasure = true;
   schedule();
 }
 

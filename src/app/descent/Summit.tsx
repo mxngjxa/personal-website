@@ -54,7 +54,10 @@ export function Summit({
       if (!el) return;
       const r = el.getBoundingClientRect();
       top.current = r.top + window.scrollY;
-      span.current = Math.max(1, r.height - f.vh);
+      // Sticky travel is section height minus the pinned scene's height
+      // (100svh, stable), not the live viewport, which a toolbar changes.
+      const pin = el.firstElementChild as HTMLElement | null;
+      span.current = Math.max(1, r.height - (pin?.offsetHeight || f.vh));
     }
   );
 

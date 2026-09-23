@@ -433,8 +433,9 @@ function measure(scene: Scene, f: ScrollFrame) {
   const scrollY = window.scrollY;
   if (hero) {
     const r = hero.getBoundingClientRect();
+    const pin = hero.firstElementChild as HTMLElement | null;
     scene.heroTop = r.top + scrollY;
-    scene.heroScroll = Math.max(1, r.height - vh);
+    scene.heroScroll = Math.max(1, r.height - (pin?.offsetHeight || vh));
   } else {
     scene.heroTop = 0;
     scene.heroScroll = 1;
