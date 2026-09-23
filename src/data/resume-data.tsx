@@ -46,7 +46,7 @@ export const RESUME_DATA: ResumeData = {
     },
     {
       school: "Fei Tian College - Northern Campus",
-      degree: "BS in Data Science, Magna Cum Laude | GPA: 3.80",
+      degree: "BS in Data Science, Magna Cum Laude",
       start: "2023",
       end: "2025",
       startDate: "2023-01",
