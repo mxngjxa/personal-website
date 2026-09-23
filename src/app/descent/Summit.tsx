@@ -104,18 +104,18 @@ export function Summit({
           <p className="summit__drop" aria-hidden="true">
             DROP IN <span className="blink">↓</span>
           </p>
-        </div>
 
-        <div className="countdown" aria-hidden="true">
-          {STEPS.map((s, i) => (
-            <span
-              key={s}
-              className={`countdown__light${s === "GO" ? " countdown__light--go" : ""}`}
-              data-i={i}
-            >
-              {s}
-            </span>
-          ))}
+          <div className="countdown" aria-hidden="true">
+            {STEPS.map((s, i) => (
+              <span
+                key={s}
+                className={`countdown__light${s === "GO" ? " countdown__light--go" : ""}`}
+                data-i={i}
+              >
+                {s}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
     </section>
