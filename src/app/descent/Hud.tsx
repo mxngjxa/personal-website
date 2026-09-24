@@ -11,7 +11,8 @@ const fmtAlt = (n: number) => n.toLocaleString("en-US");
 
 /**
  * Fixed race HUD. Numbers are written straight to text nodes from the shared
- * scroll loop — React never re-renders on scroll.
+ * scroll loop — React never re-renders on scroll. The readouts are
+ * aria-hidden and deliberately not a live region: they change every frame.
  */
 export function Hud({
   altTop,
@@ -120,7 +121,9 @@ function NightSkiToggle() {
       onClick={() => setTheme(night ? "light" : "dark")}
     >
       NIGHT SKI{" "}
-      <span className="hud__toggle-state">
+      {/* visual only: aria-pressed carries the state, so the name stays
+          "NIGHT SKI" instead of "NIGHT SKI OFF, not pressed" */}
+      <span className="hud__toggle-state" aria-hidden="true">
         <span className="when-night">ON</span>
         <span className="when-day">OFF</span>
       </span>

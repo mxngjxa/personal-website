@@ -20,20 +20,28 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
+      # Pinned: an unpinned toolchain can change the build under us. Bump deliberately
+      # (keep in step with ci.yml).
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.3.10
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bunx biome check ./src
+
+      - name: Typecheck
+        run: bunx tsc --noEmit
 
       - name: Build
         run: bun run build
 
       - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: projects/162323591265/locations/global/workloadIdentityPools/github/providers/github-oidc
           service_account: github-deploy@personal-website-74629.iam.gserviceaccount.com

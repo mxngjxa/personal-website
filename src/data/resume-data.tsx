@@ -81,9 +81,9 @@ export const RESUME_DATA: ResumeData = {
         </>
       ),
       highlights: [
-        "Own in-house RL rollout infrastructure on GCP/AWS as core research engineer: 3.5M+ agent rollouts across E2B/Modal/Daytona, peaking at 60k+ runs/day across multi-model agentic coding and non-coding pipelines.",
-        "Rebuilt the rollout stack twice in 3 months as customer and research needs shifted; migrated execution environments to Daytona/Modal, cutting sandbox cold-start p50\u00a0111s\u00a0→\u00a023s (−79%) at sustained load.",
-        "Led R&D for multi-tenant RAG and internal data-auditing platforms; drove client-facing evals for Fortune\u00a050 accounts.",
+        "Own RL rollout infra on GCP/AWS: 3.5M+ agent rollouts across E2B, Modal and Daytona, peaking at 60k+ runs/day.",
+        "Rebuilt the rollout stack twice in 3 months; cut sandbox cold-start p50 111s\u00a0→\u00a023s (−79%) under load.",
+        "Led R&D on multi-tenant RAG and data-auditing platforms; ran client evals for Fortune\u00a050 accounts.",
       ],
     },
     {

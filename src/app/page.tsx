@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { RESUME_DATA } from "@/data/resume-data";
-import { generateResumeStructuredData } from "@/lib/structured-data";
+import {
+  generateResumeStructuredData,
+  SITE_NAME,
+  SITE_TITLE,
+} from "@/lib/structured-data";
 import { Hud } from "./descent/Hud";
 import { PixelRun } from "./descent/PixelRun";
 import {
@@ -24,19 +28,24 @@ import { Summit } from "./descent/Summit";
 import { TrailMap } from "./descent/TrailMap";
 import "./descent/descent.css";
 
+// The home page IS the site, so skip the layout's "%s | name" template. The
+// OG/Twitter images come from opengraph-image.png / twitter-image.png.
 export const metadata: Metadata = {
-  title: `${RESUME_DATA.name} - Resume`,
+  title: { absolute: SITE_TITLE },
   description: RESUME_DATA.about,
   openGraph: {
-    title: `${RESUME_DATA.name} - Resume`,
+    title: SITE_TITLE,
     description: RESUME_DATA.about,
     type: "profile",
+    firstName: NAME.first,
+    lastName: NAME.last,
     locale: "en_US",
     url: RESUME_DATA.personalWebsiteUrl,
+    siteName: SITE_NAME,
   },
   twitter: {
     card: "summary_large_image",
-    title: `${RESUME_DATA.name} - Resume`,
+    title: SITE_TITLE,
     description: RESUME_DATA.about,
   },
 };

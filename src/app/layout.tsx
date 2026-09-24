@@ -6,12 +6,23 @@ import type React from "react";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Providers } from "@/components/providers";
 import { RESUME_DATA } from "@/data/resume-data";
+import { SITE_NAME, SITE_TITLE } from "@/lib/structured-data";
+
+// Font loading: all three are self-hosted by next/font at build time. Only
+// Archivo is preloaded: it sets the hero name, the LCP element. Instrument
+// Sans and Silkscreen are still requested as soon as the CSS parses, they
+// just don't compete with the name for the first bytes. adjustFontFallback
+// (on by default, stated here so it stays on) emits a size-adjusted local
+// fallback face per family, so the swap barely shifts layout.
 
 // Display: trail-signage headlines (variable width axis for font-stretch).
 const archivo = Archivo({
   subsets: ["latin"],
   axes: ["wdth"],
   display: "swap",
+  preload: true,
+  adjustFontFallback: true,
+  fallback: ["Arial Black", "system-ui", "sans-serif"],
   variable: "--font-display",
 });
 
@@ -19,6 +30,9 @@ const archivo = Archivo({
 const instrumentSans = Instrument_Sans({
   subsets: ["latin"],
   display: "swap",
+  preload: false,
+  adjustFontFallback: true,
+  fallback: ["ui-sans-serif", "system-ui", "sans-serif"],
   variable: "--font-body",
 });
 
@@ -27,14 +41,17 @@ const silkscreen = Silkscreen({
   subsets: ["latin"],
   weight: ["400", "700"],
   display: "swap",
+  preload: false,
+  adjustFontFallback: true,
+  fallback: ["ui-monospace", "monospace"],
   variable: "--font-pixel",
 });
 
 export const metadata: Metadata = {
   metadataBase: new URL(RESUME_DATA.personalWebsiteUrl),
   title: {
-    default: `${RESUME_DATA.name} - ${RESUME_DATA.about}`,
-    template: `%s | ${RESUME_DATA.name}`,
+    default: SITE_TITLE,
+    template: `%s | ${SITE_NAME}`,
   },
   description: RESUME_DATA.about,
   keywords: [
@@ -61,8 +78,8 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: RESUME_DATA.personalWebsiteUrl,
-    siteName: `${RESUME_DATA.name}'s CV`,
-    title: `${RESUME_DATA.name} - ${RESUME_DATA.about}`,
+    siteName: SITE_NAME,
+    title: SITE_TITLE,
     description: RESUME_DATA.about,
   },
   robots: {
@@ -78,7 +95,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: `${RESUME_DATA.name} - ${RESUME_DATA.about}`,
+    title: SITE_TITLE,
     description: RESUME_DATA.about,
   },
   alternates: {

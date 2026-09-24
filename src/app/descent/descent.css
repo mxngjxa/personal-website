@@ -211,6 +211,12 @@ html:has(.descent) body {
   outline-offset: -5px;
 }
 
+/* The brand cell is ink-filled: a blue ring on it is under 3:1 in day mode,
+   so it takes the cell's own text color (snow, or ink over the red hover). */
+.descent .hud__brand:focus-visible {
+  outline-color: currentColor;
+}
+
 .when-night {
   display: none;
 }
@@ -234,6 +240,13 @@ html:has(.descent) body {
 
   .hud .hud__narrow {
     display: flex;
+    flex: 1;
+    border-right: 0;
+  }
+
+  /* readout fills the bar; the toggle's own left rule is the only divider */
+  .hud .hud__spacer {
+    display: none;
   }
 }
 
@@ -1406,6 +1419,14 @@ html:has(.descent) body {
   box-shadow: 0 0 0 var(--ink);
 }
 
+/* Very narrow phones: shrink SAY HI so the waving skier (canvas, beside it)
+   has clear room to its right instead of tucking behind the 10px shadow. */
+@media (max-width: 329px) {
+  .descent .say-hi {
+    font-size: 2.2rem;
+  }
+}
+
 .d-footer {
   position: relative;
   z-index: 1;
@@ -1429,20 +1450,20 @@ html:has(.descent) body {
 
 /* ---------------------------------------------------------------- reveal */
 
-.descent[data-fx="on"] [data-reveal]:not(.is-in) {
+.descent[data-fx="on"] [data-reveal]:not([data-revealed]) {
   opacity: 0;
 }
 
-.descent[data-fx="on"] [data-reveal].is-in {
+.descent[data-fx="on"] [data-reveal][data-revealed] {
   animation: d-drop-in 0.6s cubic-bezier(0.2, 0.9, 0.25, 1) backwards;
 }
 
-.descent[data-fx="on"] .gate--left .gate__flag.is-in {
+.descent[data-fx="on"] .gate--left .gate__flag[data-revealed] {
   animation-name: d-flag-left;
   animation-duration: 0.75s;
 }
 
-.descent[data-fx="on"] .gate--right .gate__flag.is-in {
+.descent[data-fx="on"] .gate--right .gate__flag[data-revealed] {
   animation-name: d-flag-right;
   animation-duration: 0.75s;
 }
@@ -1500,8 +1521,8 @@ html:has(.descent) body {
     bottom: -92px;
   }
 
-  .descent[data-fx="on"] .gate--left .gate__flag.is-in,
-  .descent[data-fx="on"] .gate--right .gate__flag.is-in {
+  .descent[data-fx="on"] .gate--left .gate__flag[data-revealed],
+  .descent[data-fx="on"] .gate--right .gate__flag[data-revealed] {
     animation-name: d-flag-right;
   }
 
@@ -1520,6 +1541,28 @@ html:has(.descent) body {
 
   .board__cap span:last-child {
     display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  /* LINE/period on one row, the EXPERTS ONLY plate on its own row below */
+  .project__bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .project__period {
+    white-space: nowrap;
+  }
+
+  .gate__points li {
+    padding-left: 14px;
+    overflow-wrap: break-word;
+  }
+
+  .gate__points li + li {
+    margin-top: 10px;
   }
 }
 
@@ -1543,6 +1586,12 @@ html:has(.descent) body {
     transform: rotate(-2deg);
   }
 
+  .summit__name,
+  .bib,
+  .trail-map__dot {
+    will-change: auto;
+  }
+
   .summit__about,
   .summit__drop {
     opacity: 1;
@@ -1561,12 +1610,14 @@ html:has(.descent) body {
     animation: none;
   }
 
-  .descent[data-fx="on"] [data-reveal]:not(.is-in) {
+  .descent[data-fx="on"] [data-reveal]:not([data-revealed]) {
     opacity: 1;
   }
 
-  .descent[data-fx="on"] [data-reveal].is-in,
-  .descent[data-fx="on"] :is(.gate--left, .gate--right) .gate__flag.is-in {
+  .descent[data-fx="on"] [data-reveal][data-revealed],
+  .descent[data-fx="on"]
+    :is(.gate--left, .gate--right)
+    .gate__flag[data-revealed] {
     animation: none;
   }
 
@@ -1642,7 +1693,8 @@ html:has(.descent) body {
     opacity: 1;
   }
 
-  .descent[data-fx] [data-reveal]:is(*, .is-in, :not(.is-in)) {
+  .descent[data-fx]
+    [data-reveal]:is(*, [data-revealed], :not([data-revealed])) {
     opacity: 1;
     animation: none;
   }

@@ -333,6 +333,17 @@ interface Scene {
   heroTop: number;
   heroScroll: number;
   stars: Array<[number, number, number]>;
+  /** inputs the ridges + stars were last generated from */
+  ridgeKey: string;
+  /** inputs the tree lines were last placed from */
+  treeKey: string;
+  /**
+   * Pre-rendered sky + ridges, one per dither phase (camera shift & 3),
+   * built lazily and dropped whenever the ridges or the palette change.
+   */
+  backdrops: Array<Uint32Array | null>;
+  /** the theme class flipped; re-read the palette at the next measure */
+  themeDirty: boolean;
   flakes: Float32Array; // x, y, speed, depth, phase
   spray: Float32Array; // see SPRAY_STRIDE
   sprayHead: number;
@@ -386,6 +397,7 @@ function bakeAll(scene: Scene) {
     Object.entries(COMPILED.skier).map(([k, c]) => [k, bake(c, scene.pal)])
   ) as Record<SkierPose, BakedSprite>;
   scene.pines = COMPILED.pines.map((p) => bake(p, scene.pal));
+  scene.backdrops = [null, null, null, null];
 }
 
 /* ------------------------------------------------------------------------- */
@@ -398,8 +410,126 @@ interface Ctrl {
   gate: boolean;
 }
 
+interface PoleBox {
+  /** viewport x of the pole centre */
+  cx: number;
+  /** page y of the pole bottom */
+  bottom: number;
+  side: string | undefined;
+}
+
+interface SectionBox {
+  top: number;
+  bottom: number;
+  data: DOMStringMap;
+  poles: PoleBox[];
+}
+
+/**
+ * Every DOM geometry read measure() needs, taken in one batch before
+ * anything is written, so the canvas resize can't force a second layout.
+ * Page-space values add scrollY; x values stay in viewport px.
+ */
+interface Layout {
+  scrollY: number;
+  /** hero page top, its height and the pinned child's height (0 = none) */
+  hero: { top: number; height: number; pin: number } | null;
+  sections: SectionBox[];
+  /** page y of the finish line */
+  finTop: number | null;
+  /** SAY HI block: viewport right edge, page bottom */
+  spot: { right: number; bottom: number } | null;
+  /** right edge of the summary text column */
+  measureRight: number | null;
+  /** content column, inside its padding */
+  col: { left: number; right: number } | null;
+}
+
+const hasBox = (r: DOMRect) => r.width > 0 || r.height > 0;
+
+function readLayout(): Layout {
+  const scrollY = window.scrollY;
+
+  let hero: Layout["hero"] = null;
+  const heroEl = document.getElementById("summit");
+  if (heroEl) {
+    const r = heroEl.getBoundingClientRect();
+    const pin = heroEl.firstElementChild as HTMLElement | null;
+    hero = {
+      top: r.top + scrollY,
+      height: r.height,
+      pin: pin?.offsetHeight ?? 0,
+    };
+  }
+
+  const sections: SectionBox[] = [];
+  for (const s of document.querySelectorAll<HTMLElement>("[data-run]")) {
+    const r = s.getBoundingClientRect();
+    const poles: PoleBox[] = [];
+    if (s.dataset.run === "gates") {
+      for (const p of s.querySelectorAll<HTMLElement>("[data-gate]")) {
+        const pr = p.getBoundingClientRect();
+        if (!hasBox(pr)) continue;
+        poles.push({
+          cx: pr.left + pr.width / 2,
+          bottom: pr.bottom + scrollY,
+          side: p.dataset.gate,
+        });
+      }
+    }
+    const top = r.top + scrollY;
+    sections.push({ top, bottom: top + r.height, data: s.dataset, poles });
+  }
+
+  const finR = document
+    .querySelector<HTMLElement>("[data-finish-line]")
+    ?.getBoundingClientRect();
+  const spotR = document
+    .querySelector<HTMLElement>("[data-wave-spot]")
+    ?.getBoundingClientRect();
+  const measureR = document
+    .querySelector<HTMLElement>("#the-line .d-measure")
+    ?.getBoundingClientRect();
+
+  let col: Layout["col"] = null;
+  const colEl = document.querySelector<HTMLElement>("#gates .d-container");
+  if (colEl) {
+    const cr = colEl.getBoundingClientRect();
+    const cs = getComputedStyle(colEl);
+    col = {
+      left: cr.left + Number.parseFloat(cs.paddingLeft),
+      right: cr.right - Number.parseFloat(cs.paddingRight),
+    };
+  }
+
+  return {
+    scrollY,
+    hero,
+    sections,
+    finTop: finR && hasBox(finR) ? finR.top + scrollY : null,
+    spot:
+      spotR && hasBox(spotR)
+        ? { right: spotR.right, bottom: spotR.bottom + scrollY }
+        : null,
+    measureRight: measureR ? measureR.right : null,
+    col,
+  };
+}
+
 function measure(scene: Scene, f: ScrollFrame) {
   const { vw, vh, docH } = f;
+  // Reads first (layout is clean here), writes to the canvas at the end.
+  const layout = readLayout();
+
+  if (scene.themeDirty) {
+    scene.themeDirty = false;
+    const next = readPalette();
+    if (next.night !== scene.pal.night) {
+      scene.pal = next;
+      bakeAll(scene);
+    }
+  }
+
   const dpr = window.devicePixelRatio || 1;
   // Snap so one canvas pixel is an integer number of device pixels.
   const PX = Math.max(1, Math.round(PIXEL * dpr)) / dpr;
@@ -429,13 +559,12 @@ function measure(scene: Scene, f: ScrollFrame) {
   const feetScreenRow = scene.anchorRow + spriteH - 1;
 
   // --- hero camera
-  const hero = document.getElementById("summit");
-  const scrollY = window.scrollY;
-  if (hero) {
-    const r = hero.getBoundingClientRect();
-    const pin = hero.firstElementChild as HTMLElement | null;
-    scene.heroTop = r.top + scrollY;
-    scene.heroScroll = Math.max(1, r.height - (pin?.offsetHeight || vh));
+  if (layout.hero) {
+    scene.heroTop = layout.hero.top;
+    scene.heroScroll = Math.max(
+      1,
+      layout.hero.height - (layout.hero.pin || vh)
+    );
   } else {
     scene.heroTop = 0;
     scene.heroScroll = 1;
@@ -447,24 +576,15 @@ function measure(scene: Scene, f: ScrollFrame) {
 
   // --- the line: control points from lanes + slalom poles
   const pts: Ctrl[] = [];
-  const sections = document.querySelectorAll<HTMLElement>("[data-run]");
   const laneStep = mobile ? 240 : 320;
-  for (const s of sections) {
-    const r = s.getBoundingClientRect();
-    const top = r.top + scrollY;
-    const bottom = top + r.height;
-    if (s.dataset.run === "gates") {
-      const poles = s.querySelectorAll<HTMLElement>("[data-gate]");
+  for (const { top, bottom, data, poles } of layout.sections) {
+    if (data.run === "gates") {
       const off = mobile ? 42 : 56;
       let prev: Ctrl | null = null;
       for (const p of poles) {
-        const pr = p.getBoundingClientRect();
-        if (pr.width === 0 && pr.height === 0) continue;
-        const px = pr.left + pr.width / 2;
         // Pass the pole where it is planted in the snow, below its flag.
-        const py = pr.bottom + scrollY - (mobile ? 22 : 30);
-        const side = p.dataset.gate;
-        const x = mobile || side === "left" ? px + off : px - off;
+        const py = p.bottom - (mobile ? 22 : 30);
+        const x = mobile || p.side === "left" ? p.cx + off : p.cx - off;
         const c = { y: py, x, gate: true };
         if (mobile && prev) {
           // Swing out between gates so the trail keeps its S on a phone.
@@ -475,11 +595,8 @@ function measure(scene: Scene, f: ScrollFrame) {
       }
     } else {
       const lane =
-        Number.parseFloat(
-          (mobile ? s.dataset.laneM : s.dataset.lane) ?? "0.8"
-        ) * vw;
-      const carve =
-        Number.parseFloat(s.dataset.carve ?? "1") * (mobile ? 14 : 28);
+        Number.parseFloat((mobile ? data.laneM : data.lane) ?? "0.8") * vw;
+      const carve = Number.parseFloat(data.carve ?? "1") * (mobile ? 14 : 28);
       if (carve === 0) {
         pts.push({ y: top, x: lane, gate: false });
         pts.push({ y: bottom, x: lane, gate: false });
@@ -499,7 +616,9 @@ function measure(scene: Scene, f: ScrollFrame) {
     .sort((a, b) => a.y - b.y);
 
   const rows = Math.ceil(docH / PX) + H + 2;
-  const pathX = new Float32Array(rows);
+  // Every row is rewritten below, so a same-sized buffer can be reused.
+  const pathX =
+    scene.pathX.length === rows ? scene.pathX : new Float32Array(rows);
   const halfW = (scene.skier.tuck.w / 2 + 2) * PX;
   if (ctrl.length === 0) {
     pathX.fill((vw * 0.8) / PX);
@@ -524,10 +643,8 @@ function measure(scene: Scene, f: ScrollFrame) {
   // --- finish line: carve in, hockey stop just past the line, then park.
   scene.finishRow = -1;
   scene.lastDu = Number.NaN;
-  const fin = document.querySelector<HTMLElement>("[data-finish-line]");
-  const finR = fin?.getBoundingClientRect();
-  if (finR && (finR.width > 0 || finR.height > 0)) {
-    const lineRow = Math.round((finR.top + scrollY) / PX);
+  if (layout.finTop !== null) {
+    const lineRow = Math.round(layout.finTop / PX);
     const brake = lineRow + 2;
     const stop = brake + STOP_D;
     if (brake > FINISH_APPROACH && stop < rows) {
@@ -558,7 +675,7 @@ function measure(scene: Scene, f: ScrollFrame) {
     }
   }
   scene.pathX = pathX;
-  measureWalk(scene, f, feetScreenRow);
+  measureWalk(scene, f, feetScreenRow, layout.spot);
 
   // Layout changed → old tracks no longer line up; start a fresh trail.
   const layoutKey = `${W}x${Math.round(docH / 50)}`;
@@ -569,61 +686,97 @@ function measure(scene: Scene, f: ScrollFrame) {
     scene.printsShown = 0;
   }
 
-  // --- ridge lines (summit sits under the skier at scroll 0)
+  // --- ridge lines (summit sits under the skier at scroll 0). Pure
+  // functions of these few numbers, so an unchanged size skips them.
   const summitCol = Math.round(pathX[feetScreenRow] ?? W * 0.8);
   const peakH = scene.horizon0 - (feetScreenRow + 1);
-  const farN = ridge(W, 7, 0.62);
-  const nearN = ridge(W, 31, 0.58);
-  const far = new Float32Array(W);
-  const near = new Float32Array(W);
-  for (let x = 0; x < W; x++) {
-    far[x] = Math.round(peakH * (0.35 + farN[x] * 0.85));
-    const base = peakH * (0.12 + nearN[x] * 0.62);
-    const d = Math.abs(x - summitCol);
-    // A little plateau for the skier to stand on, then jagged flanks.
-    const peak = d <= 4 ? peakH : peakH - (d - 4) * 0.9 - (d % 3 === 0 ? 1 : 0);
-    near[x] = Math.round(Math.max(base, peak));
-  }
-  scene.far = far;
-  scene.near = near;
+  const ridgeKey = `${W}:${scene.horizon0}:${summitCol}:${peakH}`;
+  if (ridgeKey !== scene.ridgeKey) {
+    scene.ridgeKey = ridgeKey;
+    scene.backdrops = [null, null, null, null];
+    const farN = ridge(W, 7, 0.62);
+    const nearN = ridge(W, 31, 0.58);
+    const far = new Float32Array(W);
+    const near = new Float32Array(W);
+    for (let x = 0; x < W; x++) {
+      far[x] = Math.round(peakH * (0.35 + farN[x] * 0.85));
+      const base = peakH * (0.12 + nearN[x] * 0.62);
+      const d = Math.abs(x - summitCol);
+      // A little plateau for the skier to stand on, then jagged flanks.
+      const peak =
+        d <= 4 ? peakH : peakH - (d - 4) * 0.9 - (d % 3 === 0 ? 1 : 0);
+      near[x] = Math.round(Math.max(base, peak));
+    }
+    scene.far = far;
+    scene.near = near;
 
-  // stars (night) — positions relative to the horizon so they pitch away too
-  const rand = mulberry32(99);
-  scene.stars = [];
-  for (let i = 0; i < Math.round((W * scene.horizon0) / 140); i++) {
-    scene.stars.push([
-      Math.floor(rand() * W),
-      Math.floor(rand() * scene.horizon0 * 0.8),
-      rand(),
-    ]);
+    // stars (night) — positions relative to the horizon so they pitch away too
+    const rand = mulberry32(99);
+    scene.stars = [];
+    for (let i = 0; i < Math.round((W * scene.horizon0) / 140); i++) {
+      scene.stars.push([
+        Math.floor(rand() * W),
+        Math.floor(rand() * scene.horizon0 * 0.8),
+        rand(),
+      ]);
+    }
   }
 
   // --- trees along the piste edges, outside the content column
   // With the trail-map rail on screen, the right-hand tree line moves in to
   // the gap between the text column and the skier's lane.
   const railOn = vw >= 1024;
-  const measureEl = document.querySelector<HTMLElement>("#the-line .d-measure");
-  const measureRight = measureEl
-    ? measureEl.getBoundingClientRect().right / PX
-    : W * 0.7;
+  const measureRight =
+    layout.measureRight !== null ? layout.measureRight / PX : W * 0.7;
   const laneLeft = (vw * 0.84 - 72) / PX;
-  const col = document.querySelector<HTMLElement>("#gates .d-container");
-  let colLeft = (vw * 0.06) / PX;
-  let colRight = (vw * 0.94) / PX;
-  if (col) {
-    const cr = col.getBoundingClientRect();
-    const cs = getComputedStyle(col);
-    colLeft = (cr.left + Number.parseFloat(cs.paddingLeft)) / PX;
-    colRight = (cr.right - Number.parseFloat(cs.paddingRight)) / PX;
+  const colLeft = (layout.col ? layout.col.left : vw * 0.06) / PX;
+  const colRight = (layout.col ? layout.col.right : vw * 0.94) / PX;
+  const docRows = Math.ceil(docH / PX);
+  const treeKey = [
+    W,
+    docRows,
+    mobile,
+    railOn,
+    measureRight,
+    laneLeft,
+    colLeft,
+    colRight,
+  ].join(":");
+  if (treeKey !== scene.treeKey) {
+    scene.treeKey = treeKey;
+    scene.trees = placeTrees(scene, {
+      W,
+      docRows,
+      mobile,
+      railOn,
+      measureRight,
+      laneLeft,
+      colLeft,
+      colRight,
+    });
   }
+}
+
+interface TreeBounds {
+  W: number;
+  docRows: number;
+  mobile: boolean;
+  railOn: boolean;
+  measureRight: number;
+  laneLeft: number;
+  colLeft: number;
+  colRight: number;
+}
+
+function placeTrees(scene: Scene, b: TreeBounds): Tree[] {
+  const { W, mobile } = b;
   const trand = mulberry32(1337);
   const trees: Tree[] = [];
-  const docRows = Math.ceil(docH / PX);
-  for (let row = 10; row < docRows; row += 14 + Math.floor(trand() * 26)) {
+  for (let row = 10; row < b.docRows; row += 14 + Math.floor(trand() * 26)) {
     for (const side of [0, 1]) {
       const roll = trand();
       const kind = roll < 0.45 ? 0 : roll < 0.8 ? 1 : 2;
-      const w = COMPILED.pines[kind].w;
+      const w = scene.pines[kind].w;
       let lo: number;
       let hi: number;
       if (mobile) {
@@ -632,12 +785,12 @@ function measure(scene: Scene, f: ScrollFrame) {
         hi = side === 0 ? 1 : W + 1;
       } else if (side === 0) {
         lo = w / 2 + 1;
-        hi = colLeft - w / 2 - 2;
-      } else if (railOn) {
-        lo = measureRight + w / 2 + 6;
-        hi = laneLeft - w / 2;
+        hi = b.colLeft - w / 2 - 2;
+      } else if (b.railOn) {
+        lo = b.measureRight + w / 2 + 6;
+        hi = b.laneLeft - w / 2;
       } else {
-        lo = colRight + w / 2 + 2;
+        lo = b.colRight + w / 2 + 2;
         hi = W - w / 2 - 1;
       }
       if (hi - lo < 1) {
@@ -653,7 +806,7 @@ function measure(scene: Scene, f: ScrollFrame) {
       });
     }
   }
-  scene.trees = trees;
+  return trees;
 }
 
 const smooth = (t: number) => t * t * (3 - 2 * t);
@@ -663,20 +816,25 @@ const smooth = (t: number) => t * t * (3 - 2 * t);
  * open side of the slope, then a turn in to stand right of the block with
  * the soles on its bottom edge. All page-space, derived from layout only.
  */
-function measureWalk(scene: Scene, f: ScrollFrame, feetScreenRow: number) {
+function measureWalk(
+  scene: Scene,
+  f: ScrollFrame,
+  feetScreenRow: number,
+  spot: Layout["spot"]
+) {
   scene.walk = false;
-  if (scene.finishRow < 0) return;
-  const spot = document.querySelector<HTMLElement>("[data-wave-spot]");
-  const sr = spot?.getBoundingClientRect();
-  if (!sr || (sr.width === 0 && sr.height === 0)) return;
+  if (scene.finishRow < 0 || !spot) return;
   const { PX, W, mobile } = scene;
-  const scrollY = window.scrollY;
-  const standW = COMPILED.skier.stand.w;
   // Body is centred on column 7 of every on-foot frame.
   const half = 7;
-  const leftPx = Math.min(sr.right + WAVE_GAP, f.vw - standW * PX - 2);
-  const waveX = Math.round(leftPx / PX) + half;
-  const waveRow = Math.round((sr.bottom + scrollY) / PX) - 1;
+  // Keep the widest (waving) frame and its night outline on screen, even on
+  // a phone narrower than SAY HI plus the skier: then he tucks in closer.
+  const { waveA, waveB } = COMPILED.skier;
+  const waveW = Math.max(waveA.w, waveB.w) + 1;
+  const maxLeft = Math.floor(f.vw / PX) - waveW;
+  const leftCol = Math.min(Math.round((spot.right + WAVE_GAP) / PX), maxLeft);
+  const waveX = Math.max(0, leftCol) + half;
+  const waveRow = Math.round(spot.bottom / PX) - 1;
 
   const propX = scene.pathX[scene.stopRow];
   const dir = scene.stopDir;
@@ -780,9 +938,47 @@ function blit(
   }
 }
 
-function drawSky(scene: Scene, horizon: number, shift: number) {
-  const { buf, W, pal, horizon0 } = scene;
-  const top = Math.max(0, Math.min(horizon, scene.H));
+/**
+ * Sky + ridges for one camera shift. Everything above the horizon depends
+ * only on the size, the palette and `shift`, and `shift` only moves it: the
+ * scene slides up by `shift` rows while the Bayer dither stays put on the
+ * screen, so a shift is a row offset into one of four pre-rendered strips
+ * (one per `shift & 3`). One memcpy per frame instead of a dither per pixel.
+ */
+function drawHero(scene: Scene, horizon: number, shift: number) {
+  // Fallbacks keep output identical where the strips don't apply: a sky
+  // taller than the canvas (stars clip against the screen bottom there) and
+  // rubber-band overscroll under reduced motion.
+  if (horizon > scene.H || shift < 0) {
+    drawSky(scene, scene.buf, scene.H, horizon, shift);
+    drawRidges(scene, scene.buf, scene.H, horizon);
+    return;
+  }
+  const phase = shift & 3;
+  // The strip is drawn at a shift of `base`, which has the same dither
+  // phase and is <= 0, so it holds every row any `shift` can show.
+  const base = phase - 4;
+  let strip = scene.backdrops[phase];
+  if (!strip) {
+    const h = scene.horizon0 - base;
+    strip = new Uint32Array(scene.W * h);
+    drawSky(scene, strip, h, h, base);
+    drawRidges(scene, strip, h, h);
+    scene.backdrops[phase] = strip;
+  }
+  const from = (shift - base) * scene.W;
+  scene.buf.set(strip.subarray(from, from + horizon * scene.W));
+}
+
+function drawSky(
+  scene: Scene,
+  buf: Uint32Array,
+  H: number,
+  horizon: number,
+  shift: number
+) {
+  const { W, pal, horizon0 } = scene;
+  const top = Math.max(0, Math.min(horizon, H));
   for (let y = 0; y < top; y++) {
     // position within the (moving) sky: 0 at zenith, 1 at horizon
     const t = clamp((y + shift) / horizon0, 0, 1) * 2;
@@ -849,8 +1045,13 @@ function drawSky(scene: Scene, horizon: number, shift: number) {
   }
 }
 
-function drawRidges(scene: Scene, horizon: number) {
-  const { buf, W, H, pal, far, near } = scene;
+function drawRidges(
+  scene: Scene,
+  buf: Uint32Array,
+  H: number,
+  horizon: number
+) {
+  const { W, pal, far, near } = scene;
   if (horizon <= 0) return;
   for (let x = 0; x < W; x++) {
     // far range: flat tone with a dithered snow cap
@@ -1029,10 +1230,8 @@ function draw(scene: Scene, f: ScrollFrame) {
   const horizon = scene.horizon0 - shift;
   const clipTop = Math.max(0, horizon);
 
-  if (horizon > 0) {
-    drawSky(scene, horizon, shift);
-    drawRidges(scene, horizon);
-  }
+  // Hero layers only while any of the sky is still on screen.
+  if (horizon > 0) drawHero(scene, horizon, shift);
 
   drawTrees(scene, scrollRow, clipTop);
   drawFinish(scene, scrollRow, clipTop);
@@ -1313,8 +1512,85 @@ function draw(scene: Scene, f: ScrollFrame) {
 /* Component                                                                  */
 /* ------------------------------------------------------------------------- */
 
+function createScene(
+  canvas: HTMLCanvasElement,
+  ctx: CanvasRenderingContext2D
+): Scene {
+  const pal = readPalette();
+  const flakes = new Float32Array(FLAKE_COUNT * 5);
+  const rand = mulberry32(4242);
+  for (let i = 0; i < FLAKE_COUNT; i++) {
+    flakes[i * 5] = rand() * 400;
+    flakes[i * 5 + 1] = rand() * 300;
+    flakes[i * 5 + 2] = 0.05 + rand() * 0.16;
+    flakes[i * 5 + 3] = 0.35 + rand() * 0.65;
+    flakes[i * 5 + 4] = rand() * Math.PI * 2;
+  }
+  const scene: Scene = {
+    ctx,
+    canvas,
+    img: null,
+    buf: new Uint32Array(0),
+    W: 0,
+    H: 0,
+    PX: PIXEL,
+    vw: 0,
+    vh: 0,
+    mobile: false,
+    reduced: false,
+    pal,
+    skier: {} as Scene["skier"],
+    pines: [],
+    anchorRow: 0,
+    pathX: new Float32Array(1),
+    visited: new Uint8Array(1),
+    lastFeetRow: -1,
+    trees: [],
+    far: new Float32Array(0),
+    near: new Float32Array(0),
+    horizon0: 0,
+    heroTop: 0,
+    heroScroll: 1,
+    stars: [],
+    ridgeKey: "",
+    treeKey: "",
+    backdrops: [null, null, null, null],
+    themeDirty: false,
+    flakes,
+    spray: new Float32Array(SPRAY_CAP * SPRAY_STRIDE),
+    sprayHead: 0,
+    pose: "tuck",
+    finishRow: -1,
+    brakeRow: 0,
+    stopRow: 0,
+    stopDir: -1,
+    finishX: 0,
+    lastDu: Number.NaN,
+    burstUntil: 0,
+    walk: false,
+    walkX: new Float32Array(1),
+    walkDist: new Float32Array(1),
+    walkRow0: 0,
+    walkStart: 0,
+    arrive: 1,
+    waveRow: 0,
+    waveX: 0,
+    prints: new Int32Array(0),
+    printN: 0,
+    printsShown: 0,
+    idle: false,
+    lastY: window.scrollY,
+    lastDraw: 0,
+    layoutKey: "",
+  };
+  bakeAll(scene);
+  return scene;
+}
+
 const IDLE_FRAME_MS = 66;
 const IDLE_PARK_MS = 12_000;
+/** Longest the first scene build waits for an idle slot after mount. */
+const INIT_TIMEOUT_MS = 200;
 
 export function PixelRun() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -1323,93 +1599,73 @@ export function PixelRun() {
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d", { alpha: true });
-    if (!canvas || !ctx) return;
-    const pal = readPalette();
-    const flakes = new Float32Array(FLAKE_COUNT * 5);
-    const rand = mulberry32(4242);
-    for (let i = 0; i < FLAKE_COUNT; i++) {
-      flakes[i * 5] = rand() * 400;
-      flakes[i * 5 + 1] = rand() * 300;
-      flakes[i * 5 + 2] = 0.05 + rand() * 0.16;
-      flakes[i * 5 + 3] = 0.35 + rand() * 0.65;
-      flakes[i * 5 + 4] = rand() * Math.PI * 2;
-    }
-    const scene: Scene = {
-      ctx,
-      canvas,
-      img: null,
-      buf: new Uint32Array(0),
-      W: 0,
-      H: 0,
-      PX: PIXEL,
-      vw: 0,
-      vh: 0,
-      mobile: false,
-      reduced: false,
-      pal,
-      skier: {} as Scene["skier"],
-      pines: [],
-      anchorRow: 0,
-      pathX: new Float32Array(1),
-      visited: new Uint8Array(1),
-      lastFeetRow: -1,
-      trees: [],
-      far: new Float32Array(0),
-      near: new Float32Array(0),
-      horizon0: 0,
-      heroTop: 0,
-      heroScroll: 1,
-      stars: [],
-      flakes,
-      spray: new Float32Array(SPRAY_CAP * SPRAY_STRIDE),
-      sprayHead: 0,
-      pose: "tuck",
-      finishRow: -1,
-      brakeRow: 0,
-      stopRow: 0,
-      stopDir: -1,
-      finishX: 0,
-      lastDu: Number.NaN,
-      burstUntil: 0,
-      walk: false,
-      walkX: new Float32Array(1),
-      walkDist: new Float32Array(1),
-      walkRow0: 0,
-      walkStart: 0,
-      arrive: 1,
-      waveRow: 0,
-      waveX: 0,
-      prints: new Int32Array(0),
-      printN: 0,
-      printsShown: 0,
-      idle: false,
-      lastY: window.scrollY,
-      lastDraw: 0,
-      layoutKey: "",
-    };
-    bakeAll(scene);
-    sceneRef.current = scene;
+    if (!canvas) return;
+    let cleanup: (() => void) | null = null;
 
-    // Re-palette on theme flips (next-themes toggles the `dark` class).
-    const mo = new MutationObserver(() => {
-      const next = readPalette();
-      if (next.night !== scene.pal.night) {
-        scene.pal = next;
-        bakeAll(scene);
+    // The first scene build (palette, sprites, the first measure) waits
+    // until after first paint so the server-rendered hero text isn't held
+    // up by it, and never happens in a background tab.
+    const init = () => {
+      const ctx = canvas.getContext("2d", { alpha: true });
+      if (!ctx) return;
+      const scene = createScene(canvas, ctx);
+      sceneRef.current = scene;
+
+      // Re-palette on theme flips (next-themes toggles the `dark` class).
+      // The re-bake happens at the next measure, which never runs hidden.
+      const mo = new MutationObserver(() => {
+        scene.themeDirty = true;
         invalidate();
+      });
+      mo.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["class"],
+      });
+      const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+      const onMotion = () => invalidate();
+      mq.addEventListener("change", onMotion);
+      cleanup = () => {
+        mo.disconnect();
+        mq.removeEventListener("change", onMotion);
+      };
+      // Already subscribed to the scroll loop; ask it to measure + draw.
+      invalidate();
+    };
+
+    let idle = 0;
+    let timer = 0;
+    const onVisible = () => {
+      if (document.hidden) return;
+      document.removeEventListener("visibilitychange", onVisible);
+      init();
+    };
+    const run = () => {
+      idle = 0;
+      timer = 0;
+      if (document.hidden) {
+        document.addEventListener("visibilitychange", onVisible);
+      } else {
+        init();
       }
-    });
-    mo.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const onMotion = () => invalidate();
-    mq.addEventListener("change", onMotion);
+    };
+    if ("requestIdleCallback" in window) {
+      idle = window.requestIdleCallback(run, { timeout: INIT_TIMEOUT_MS });
+    } else {
+      // No idle callbacks (Safari): run right after the next paint.
+      idle = requestAnimationFrame(() => {
+        idle = 0;
+        timer = window.setTimeout(run, 0);
+      });
+    }
+
     return () => {
-      mo.disconnect();
-      mq.removeEventListener("change", onMotion);
+      if (idle) {
+        if ("requestIdleCallback" in window) window.cancelIdleCallback(idle);
+        else cancelAnimationFrame(idle);
+      }
+      if (timer) clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+      cleanup?.();
       sceneRef.current = null;
     };
   }, []);

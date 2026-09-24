@@ -50,6 +50,7 @@ let lastY = 0;
 let lastT = 0;
 let stillFrames = 0;
 let resizeObserver: ResizeObserver | null = null;
+let dprQuery: MediaQueryList | null = null;
 
 const frame: ScrollFrame = {
   y: 0,
@@ -146,6 +147,23 @@ function onVisibility() {
   }
 }
 
+/**
+ * A devicePixelRatio change at the same CSS size (window dragged to a monitor
+ * with a different scale, browser zoom) doesn't reliably fire resize, so
+ * watch the current resolution and re-measure when it stops matching.
+ */
+function watchDpr() {
+  dprQuery?.removeEventListener("change", onDprChange);
+  dprQuery =
+    window.matchMedia?.(`(resolution: ${window.devicePixelRatio}dppx)`) ?? null;
+  dprQuery?.addEventListener("change", onDprChange);
+}
+
+function onDprChange() {
+  watchDpr();
+  invalidate();
+}
+
 function start() {
   if (listening) return;
   listening = true;
@@ -166,6 +184,7 @@ function start() {
     resizeObserver = new ResizeObserver(onResize);
     resizeObserver.observe(document.body);
   }
+  watchDpr();
   document.fonts?.ready.then(invalidate).catch(() => undefined);
 }
 
@@ -177,6 +196,8 @@ function stop() {
   document.removeEventListener("visibilitychange", onVisibility);
   resizeObserver?.disconnect();
   resizeObserver = null;
+  dprQuery?.removeEventListener("change", onDprChange);
+  dprQuery = null;
   lvhProbe?.remove();
   lvhProbe = null;
   if (raf) cancelAnimationFrame(raf);
